@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام مراقبة السكري - تطبيق للأطباء والممرضات</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #f8f9fa;
+        padding: 20px;
+        direction: rtl;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        padding: 40px;
+        text-align: center;
+        position: relative;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+      }
+
+      .header-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header .subtitle {
+        font-size: 1.2em;
+        opacity: 0.9;
+        margin-bottom: 20px;
+      }
+
+      .project-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .content {
+        padding: 40px;
+      }
+
+      .section {
+        margin-bottom: 40px;
+      }
+
+      .section h2 {
+        color: #3498db;
+        font-size: 1.8em;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .project-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+      }
+
+      .info-card {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        border-right: 4px solid #3498db;
+      }
+
+      .info-card h3 {
+        color: #3498db;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+      }
+
+      .info-item {
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .info-label {
+        font-weight: 600;
+        color: #555;
+      }
+
+      .info-value {
+        color: #333;
+        font-weight: 500;
+      }
+
+      .tech-stack {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+      }
+
+      .tech-item {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      .tech-item:hover {
+        border-color: #3498db;
+        transform: translateY(-2px);
+      }
+
+      .tech-item h4 {
+        color: #3498db;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+      }
+
+      .features-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .features-table th {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        padding: 15px;
+        text-align: right;
+        font-weight: 600;
+      }
+
+      .features-table td {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        text-align: right;
+      }
+
+      .features-table tr:nth-child(even) {
+        background: #f8f9fa;
+      }
+
+      .features-table tr:hover {
+        background: #e3f2fd;
+      }
+
+      .price-cell {
+        font-weight: 700;
+        color: #3498db;
+        text-align: left;
+      }
+
+      .user-roles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin: 20px 0;
+      }
+
+      .role-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 25px;
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .role-card:hover {
+        border-color: #3498db;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(52, 152, 219, 0.2);
+      }
+
+      .role-card h3 {
+        color: #3498db;
+        margin-bottom: 20px;
+        font-size: 1.3em;
+        text-align: center;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #3498db;
+      }
+
+      .role-card ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .role-card li {
+        padding: 8px 0;
+        padding-right: 25px;
+        position: relative;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.95em;
+      }
+
+      .role-card li::before {
+        content: "✓";
+        position: absolute;
+        right: 0;
+        color: #3498db;
+        font-weight: bold;
+        font-size: 1.1em;
+      }
+
+      .interface-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .interface-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border-right: 4px solid #3498db;
+      }
+
+      .interface-card h4 {
+        color: #3498db;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+      }
+
+      .interface-card ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .interface-card li {
+        padding: 5px 0;
+        padding-right: 20px;
+        position: relative;
+        font-size: 0.9em;
+      }
+
+      .interface-card li::before {
+        content: "•";
+        position: absolute;
+        right: 0;
+        color: #3498db;
+        font-weight: bold;
+      }
+
+      .timeline {
+        position: relative;
+        padding-right: 30px;
+      }
+
+      .timeline::before {
+        content: "";
+        position: absolute;
+        right: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #3498db;
+      }
+
+      .timeline-item {
+        position: relative;
+        margin-bottom: 30px;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-right: 20px;
+      }
+
+      .timeline-item::before {
+        content: "";
+        position: absolute;
+        right: -35px;
+        top: 25px;
+        width: 12px;
+        height: 12px;
+        background: #3498db;
+        border-radius: 50%;
+        border: 3px solid white;
+      }
+
+      .timeline-day {
+        font-weight: 700;
+        color: #3498db;
+        font-size: 1.2em;
+        margin-bottom: 10px;
+      }
+
+      .total-price {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        margin: 30px 0;
+        box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+      }
+
+      .total-price h3 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .total-price p {
+        font-size: 1.2em;
+        opacity: 0.9;
+      }
+
+      .included-list,
+      .optional-list {
+        list-style: none;
+        padding: 0;
+      }
+
+      .included-list li,
+      .optional-list li {
+        padding: 10px 0;
+        padding-right: 30px;
+        position: relative;
+        border-bottom: 1px solid #eee;
+      }
+
+      .included-list li::before {
+        content: "✓";
+        position: absolute;
+        right: 0;
+        color: #3498db;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+
+      .optional-list li::before {
+        content: "+";
+        position: absolute;
+        right: 0;
+        color: #ffc107;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+
+      .contact-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 30px;
+        border-radius: 15px;
+        margin-top: 40px;
+        text-align: center;
+      }
+
+      .contact-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .contact-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .contact-card h4 {
+        color: #3498db;
+        margin-bottom: 10px;
+      }
+
+      .print-btn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        right: auto;
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        transition: all 0.3s ease;
+        z-index: 1000;
+      }
+
+      .print-btn:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+      }
+
+      .goals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .goal-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        padding: 20px;
+        border-radius: 10px;
+        border-right: 4px solid #3498db;
+      }
+
+      .goal-card h4 {
+        color: #3498db;
+        margin-bottom: 10px;
+      }
+
+      @media print {
+        body {
+          background: white;
+          padding: 0;
+        }
+        .container {
+          box-shadow: none;
+          border-radius: 0;
+        }
+        .print-btn {
+          display: none;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 0;
+          border-radius: 0;
+        }
+        .header {
+          padding: 30px 20px;
+        }
+        .content {
+          padding: 20px;
+        }
+        .print-btn {
+          position: static;
+          margin: 20px auto;
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="print-btn" onclick="window.print()">📄 طباعة/حفظ PDF</button>
+
+    <div class="container">
+      <div class="header">
+        <div class="header-content">
+          <h1>🩺 نظام مراقبة السكري</h1>
+          <p class="subtitle">
+            تطبيق للأطباء والممرضات لتسجيل ومراقبة قياسات السكري للمرضى
+          </p>
+          <div class="project-badge">MVP - تطوير أساسي - 6 أسابيع</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="project-info">
+          <div class="info-card">
+            <h3>📋 تفاصيل المشروع</h3>
+            <div class="info-item">
+              <span class="info-label">نوع المشروع:</span>
+              <span class="info-value">تطبيقان جوالان + لوحة تحكم ويب</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">المنصات:</span>
+              <span class="info-value"
+                >Flutter (أندرويد فقط) - تطبيق الأطباء + تطبيق الممرضات + React
+                Dashboard</span
+              >
+            </div>
+            <div
+              class="info-item"
+              style="
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 1px solid #ddd;
+              "
+            >
+              <span class="info-label" style="color: #e74c3c; font-weight: 700"
+                >ملاحظة:</span
+              >
+              <span
+                class="info-value"
+                style="color: #e74c3c; font-style: italic"
+                >التطبيقات متوفرة على أندرويد فقط (iOS متاح كخيار إضافي)</span
+              >
+            </div>
+            <div class="info-item">
+              <span class="info-label">المدة:</span>
+              <span class="info-value">6 أسابيع (MVP)</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">الخادم:</span>
+              <span class="info-value">Firebase Suite / Node.js + MongoDB</span>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h3>💰 الاستثمار</h3>
+            <div class="info-item">
+              <span class="info-label">السعر الإجمالي:</span>
+              <span
+                class="info-value"
+                style="color: #3498db; font-weight: 700; font-size: 1.3em"
+                >0 دج</span
+              >
+            </div>
+            <div class="info-item">
+              <span class="info-label">الدفع:</span>
+              <span class="info-value">50% مقدماً / 50% عند التسليم</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">الضمان:</span>
+              <span class="info-value">90 يوم دعم فني (MVP)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>💡 فكرة المشروع</h2>
+          <p
+            style="
+              font-size: 1.1em;
+              line-height: 1.8;
+              color: #555;
+              margin-bottom: 20px;
+            "
+          >
+            <strong>نظام مراقبة السكري</strong> هو حل رقمي متكامل مصمم لتسهيل
+            عملية قياس وتسجيل مستويات السكر في الدم للمرضى. يتكون النظام من
+            تطبيقين جوالين منفصلين للأطباء والممرضات، بالإضافة إلى لوحة تحكم
+            إدارية شاملة. يحل النظام مشكلة تتبع وإدارة بيانات مرضى السكري من
+            خلال:
+          </p>
+          <ul style="list-style: none; padding: 0; margin-right: 20px">
+            <li style="padding: 8px 0; padding-right: 25px; position: relative">
+              <span
+                style="
+                  position: absolute;
+                  right: 0;
+                  color: #3498db;
+                  font-weight: bold;
+                "
+                >✓</span
+              >
+              تسجيل قياسات السكري بشكل رقمي ومنظم
+            </li>
+            <li style="padding: 8px 0; padding-right: 25px; position: relative">
+              <span
+                style="
+                  position: absolute;
+                  right: 0;
+                  color: #3498db;
+                  font-weight: bold;
+                "
+                >✓</span
+              >
+              تتبع تاريخ القياسات لكل مريض
+            </li>
+            <li style="padding: 8px 0; padding-right: 25px; position: relative">
+              <span
+                style="
+                  position: absolute;
+                  right: 0;
+                  color: #3498db;
+                  font-weight: bold;
+                "
+                >✓</span
+              >
+              إدارة سجلات المرضى من قبل الأطباء والممرضات
+            </li>
+            <li style="padding: 8px 0; padding-right: 25px; position: relative">
+              <span
+                style="
+                  position: absolute;
+                  right: 0;
+                  color: #3498db;
+                  font-weight: bold;
+                "
+                >✓</span
+              >
+              تحليل البيانات والإحصائيات الطبية
+            </li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h2>🎯 أهداف المشروع</h2>
+          <div class="goals-grid">
+            <div class="goal-card">
+              <h4>📊 دقة البيانات</h4>
+              <p>ضمان تسجيل دقيق ومنظم لقياسات السكري</p>
+            </div>
+            <div class="goal-card">
+              <h4>⚡ السرعة</h4>
+              <p>تسريع عملية التسجيل والوصول للبيانات</p>
+            </div>
+            <div class="goal-card">
+              <h4>🔒 الأمان</h4>
+              <p>حماية بيانات المرضى وفق معايير الخصوصية الطبية</p>
+            </div>
+            <div class="goal-card">
+              <h4>📈 التحليل</h4>
+              <p>توفير تحليلات وإحصائيات مفيدة للأطباء</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>🔧 التقنيات المستخدمة</h2>
+          <div class="tech-stack">
+            <div class="tech-item">
+              <h4>تطبيق الجوال</h4>
+              <p>Flutter Framework<br />أندرويد فقط (MVP)</p>
+            </div>
+            <div class="tech-item">
+              <h4>لوحة التحكم</h4>
+              <p>React.js + TypeScript<br />واجهة حديثة ومتجاوبة</p>
+            </div>
+            <div class="tech-item">
+              <h4>الخادم</h4>
+              <p>
+                Firebase Suite / Node.js<br />Auth, Firestore/MongoDB, Storage
+              </p>
+            </div>
+            <div class="tech-item">
+              <h4>الرسوم البيانية</h4>
+              <p>Chart.js / Recharts<br />تصور البيانات الطبية</p>
+            </div>
+            <div class="tech-item">
+              <h4>الإشعارات</h4>
+              <p>Firebase Cloud Messaging<br />تنبيهات للمرضى والأطباء</p>
+            </div>
+            <div class="tech-item">
+              <h4>الأمان</h4>
+              <p>تشفير البيانات<br />معايير HIPAA/الخصوصية الطبية</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>👥 الوظائف حسب فئة المستخدم</h2>
+          <div class="user-roles">
+            <div class="role-card">
+              <h3>👨‍⚕️ تطبيق الأطباء</h3>
+              <ul>
+                <li>تسجيل الدخول الآمن</li>
+                <li>عرض قائمة المرضى</li>
+                <li>إضافة مريض جديد</li>
+                <li>تسجيل قياسات السكري</li>
+                <li>عرض تاريخ القياسات للمريض</li>
+                <li>إضافة ملاحظات طبية</li>
+                <li>تحديد جرعات الأدوية</li>
+                <li>عرض الرسوم البيانية للقياسات</li>
+                <li>البحث عن المرضى</li>
+                <li>تصدير البيانات (PDF)</li>
+              </ul>
+            </div>
+
+            <div class="role-card">
+              <h3>👩‍⚕️ تطبيق الممرضات</h3>
+              <ul>
+                <li>تسجيل الدخول الآمن</li>
+                <li>عرض قائمة المرضى المخصصة</li>
+                <li>تسجيل قياسات السكري بسرعة</li>
+                <li>تحديث حالة المريض</li>
+                <li>عرض آخر القياسات</li>
+                <li>إضافة ملاحظات سريعة</li>
+                <li>إشعارات للمرضى المطلوب قياسهم</li>
+                <li>عرض الجدول اليومي للقياسات</li>
+                <li>تسجيل متعدد للمرضى</li>
+              </ul>
+            </div>
+
+            <div class="role-card">
+              <h3>⚙️ لوحة التحكم الإدارية</h3>
+              <ul>
+                <li>لوحة تحكم شاملة</li>
+                <li>إحصائيات عامة (عدد المرضى، القياسات اليومية)</li>
+                <li>إدارة المستخدمين (أطباء، ممرضات)</li>
+                <li>إدارة قاعدة بيانات المرضى</li>
+                <li>تقارير تحليلية متقدمة</li>
+                <li>رسوم بيانية شاملة</li>
+                <li>تصدير التقارير (PDF/Excel)</li>
+                <li>إعدادات النظام</li>
+                <li>سجل الأنشطة (Audit Log)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>📱 واجهات التطبيقات</h2>
+          <div class="interface-grid">
+            <div class="interface-card">
+              <h4>1. شاشة تسجيل الدخول</h4>
+              <ul>
+                <li>تسجيل دخول آمن</li>
+                <li>استعادة كلمة المرور</li>
+                <li>تذكر المستخدم</li>
+              </ul>
+            </div>
+
+            <div class="interface-card">
+              <h4>2. الصفحة الرئيسية</h4>
+              <ul>
+                <li>إحصائيات سريعة</li>
+                <li>المرضى المطلوب قياسهم</li>
+                <li>الوصول السريع للوظائف</li>
+              </ul>
+            </div>
+
+            <div class="interface-card">
+              <h4>3. قائمة المرضى</h4>
+              <ul>
+                <li>عرض جميع المرضى</li>
+                <li>البحث والفلترة</li>
+                <li>معلومات سريعة لكل مريض</li>
+              </ul>
+            </div>
+
+            <div class="interface-card">
+              <h4>4. صفحة المريض</h4>
+              <ul>
+                <li>معلومات المريض الكاملة</li>
+                <li>تاريخ القياسات</li>
+                <li>الرسوم البيانية</li>
+                <li>الملاحظات الطبية</li>
+              </ul>
+            </div>
+
+            <div class="interface-card">
+              <h4>5. تسجيل القياس</h4>
+              <ul>
+                <li>إدخال قيمة السكري</li>
+                <li>اختيار نوع القياس (صائم/بعد الأكل)</li>
+                <li>التاريخ والوقت</li>
+                <li>إضافة ملاحظات</li>
+              </ul>
+            </div>
+
+            <div class="interface-card">
+              <h4>6. لوحة التحكم</h4>
+              <ul>
+                <li>لوحة تحكم إدارية</li>
+                <li>إحصائيات شاملة</li>
+                <li>إدارة المستخدمين</li>
+                <li>التقارير والتحليلات</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>📦 الوظائف وتفاصيل الأسعار</h2>
+          <table class="features-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>الوظيفة</th>
+                <th>الوصف</th>
+                <th>السعر (دج)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><strong>تطبيق الأطباء Flutter (MVP)</strong></td>
+                <td>
+                  تطبيق جوال كامل للأطباء مع جميع الوظائف الأساسية (أندرويد فقط)
+                </td>
+                <td class="price-cell">7,000</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>تطبيق الممرضات Flutter (MVP)</strong></td>
+                <td>
+                  تطبيق جوال مبسط للممرضات مع وظائف التسجيل السريع (أندرويد فقط)
+                </td>
+                <td class="price-cell">6,000</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>نظام المصادقة والصلاحيات</strong></td>
+                <td>نظام تسجيل دخول آمن مع إدارة الأدوار (طبيب/ممرضة/مدير)</td>
+                <td class="price-cell">1,500</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><strong>إدارة قاعدة بيانات المرضى</strong></td>
+                <td>نظام إدارة شامل للمرضى (إضافة، تعديل، بحث، حذف)</td>
+                <td class="price-cell">2,500</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><strong>نظام تسجيل القياسات</strong></td>
+                <td>تسجيل قياسات السكري مع التاريخ والوقت والملاحظات</td>
+                <td class="price-cell">3,000</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><strong>الرسوم البيانية والتحليلات</strong></td>
+                <td>
+                  رسوم بيانية تفاعلية لتتبع تطور القياسات مع تحليلات أساسية
+                </td>
+                <td class="price-cell">2,000</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td><strong>لوحة التحكم React (Dashboard)</strong></td>
+                <td>لوحة تحكم إدارية شاملة مع إحصائيات وتقارير</td>
+                <td class="price-cell">4,000</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><strong>نظام الإشعارات</strong></td>
+                <td>إشعارات فورية للمرضى المطلوب قياسهم وتنبيهات مهمة</td>
+                <td class="price-cell">1,000</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td><strong>تصدير البيانات والتقارير</strong></td>
+                <td>تصدير التقارير بصيغة PDF/Excel للمرضى والأطباء</td>
+                <td class="price-cell">1,500</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td><strong>تكوين Backend (Firebase/Node.js)</strong></td>
+                <td>إعداد قاعدة البيانات، قواعد الأمان، APIs، والتخزين</td>
+                <td class="price-cell">2,500</td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td><strong>تصميم UI/UX طبي</strong></td>
+                <td>تصميم واجهة مستخدم طبية احترافية وبديهية</td>
+                <td class="price-cell">0</td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td><strong>الاختبارات والنشر</strong></td>
+                <td>اختبارات شاملة ونشر التطبيقات على متاجر التطبيقات</td>
+                <td class="price-cell">1,500</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="total-price">
+            <h3>0 دج</h3>
+            <p>الاستثمار الإجمالي MVP</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>🗓️ خطة التطوير MVP (6 أسابيع)</h2>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-day">الأسبوع 1</div>
+              <p>
+                تكوين المشاريع (Flutter + React)، إعداد قاعدة البيانات، نظام
+                المصادقة والصلاحيات، تصميم هيكل البيانات، وواجهات تسجيل الدخول
+                الأساسية.
+              </p>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-day">الأسبوع 2</div>
+              <p>
+                تطوير تطبيق الأطباء: إدارة المرضى، تسجيل القياسات، عرض التاريخ،
+                والوظائف الأساسية.
+              </p>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-day">الأسبوع 3</div>
+              <p>
+                تطوير تطبيق الممرضات: التسجيل السريع، قائمة المهام اليومية،
+                والوظائف الأساسية.
+              </p>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-day">الأسبوع 4</div>
+              <p>
+                تطوير لوحة التحكم: الإحصائيات، إدارة المستخدمين، التقارير. إضافة
+                الرسوم البيانية والتحليلات.
+              </p>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-day">الأسبوع 5</div>
+              <p>
+                إكمال الوظائف المتبقية: نظام الإشعارات، تصدير التقارير، تحسين
+                الواجهات، والتكامل النهائي.
+              </p>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-day">الأسبوع 6</div>
+              <p>
+                اختبارات شاملة، إصلاح الأخطاء، تحسين الأداء، نشر التطبيقات،
+                والتوثيق النهائي.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>✅ ما هو متضمن في MVP</h2>
+          <ul class="included-list">
+            <li>تطبيقان جوالان Flutter (أندرويد فقط - MVP)</li>
+            <li>لوحة تحكم ويب React.js كاملة</li>
+            <li>نظام مصادقة آمن مع إدارة الصلاحيات</li>
+            <li>إدارة كاملة لقاعدة بيانات المرضى</li>
+            <li>نظام تسجيل قياسات السكري</li>
+            <li>رسوم بيانية تفاعلية للقياسات</li>
+            <li>إحصائيات وتحليلات أساسية</li>
+            <li>نظام إشعارات فوري</li>
+            <li>تصدير التقارير (PDF/Excel)</li>
+            <li>واجهة مستخدم طبية احترافية</li>
+            <li>90 يوم دعم فني وإصلاح الأخطاء</li>
+            <li>توثيق كامل للمستخدمين</li>
+            <li>كود مصدري منظم مع تعليقات</li>
+            <li>تطبيقات جاهزة للنشر على المتاجر</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h2>📎 تحسينات اختيارية (خارج MVP)</h2>
+          <p style="margin-bottom: 20px; color: #666">
+            وظائف غير متضمنة في MVP ولكن متاحة كخيارات :
+          </p>
+          <ul class="optional-list">
+            <li>نسخة iOS للتطبيقات (أندرويد + iOS) (+15,000 دج)</li>
+            <!-- <li>تكامل مع أجهزة قياس السكري (Bluetooth) (+8,000 دج)</li> -->
+            <li>تطبيق للمرضى لمتابعة قياساتهم (+12,000 دج)</li>
+            <li>نظام محادثة بين الأطباء والمرضى (+10,000 دج)</li>
+            <li>تذكيرات تلقائية للمرضى (+5,000 دج)</li>
+            <li>تحليلات متقدمة مع الذكاء الاصطناعي (+15,000 دج)</li>
+            <!-- <li>تكامل مع أنظمة المستشفيات (HL7) (+20,000 دج)</li> -->
+            <li>تطبيق ويب PWA للوصول عبر المتصفح (+8,000 دج)</li>
+            <li>نظام مواعيد للمرضى (+6,000 دج)</li>
+            <li>دعم متعدد اللغات (عربي/إنجليزي/فرنسي) (+7,000 دج)</li>
+            <li>نظام نسخ احتياطي تلقائي (+4,000 دج)</li>
+            <li>تطبيق iPad محسّن (+10,000 دج)</li>
+            <li>تكامل مع السجلات الطبية الإلكترونية (+18,000 دج)</li>
+            <li>نظام تقارير متقدم مع AI (+12,000 دج)</li>
+            <!-- <li>واجهة API للتكاملات الخارجية (+8,000 دج)</li> -->
+          </ul>
+        </div>
+
+        <div class="contact-section">
+          <h2 style="border: none; margin-bottom: 20px; color: #3498db">
+            📞 اتصال المطور
+          </h2>
+          <div class="contact-info">
+            <div class="contact-card">
+              <h4>المطور</h4>
+              <p><strong>تيبيب فتح الله</strong></p>
+              <p>مطور Full-Stack</p>
+            </div>
+            <div class="contact-card">
+              <h4>الهاتف</h4>
+              <p><strong>0775032800</strong></p>
+              <p>متاح من 9 صباحاً - 8 مساءً</p>
+            </div>
+            <div class="contact-card">
+              <h4>حالة المشروع</h4>
+              <p><strong>جاهز للبدء</strong></p>
+              <p>تسليم احترافي مضمون</p>
+            </div>
+          </div>
+          <p style="margin-top: 20px; font-style: italic; color: #666">
+            تطوير احترافي لتطبيقات طبية باستخدام تقنيات حديثة، يركز على الدقة
+            والأمان والسهولة في الاستخدام لتحسين رعاية مرضى السكري.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // حساب السعر الإجمالي من خلايا الأسعار
+      document.addEventListener("DOMContentLoaded", function () {
+        const priceCells = document.querySelectorAll(".price-cell");
+        let total = 0;
+        priceCells.forEach((cell) => {
+          total += parseInt(cell.textContent.replace(/,/g, "")) || 0;
+        });
+
+        // تحديث عرض السعر الإجمالي
+        const totalPriceElement = document.querySelector(".total-price h3");
+        if (totalPriceElement) {
+          totalPriceElement.textContent = total.toLocaleString() + " دج";
+        }
+
+        // تحديث الإجمالي في بطاقة الاستثمار
+        const investmentTotal = document.querySelector(
+          ".info-value[style*='color: #3498db']"
+        );
+        if (investmentTotal) {
+          investmentTotal.textContent = total.toLocaleString() + " دج";
+        }
+
+        // إضافة تأثيرات التمرير لصفوف الجدول
+        const tableRows = document.querySelectorAll(".features-table tr");
+        tableRows.forEach((row) => {
+          row.addEventListener("mouseenter", function () {
+            this.style.transform = "scale(1.01)";
+            this.style.transition = "all 0.2s ease";
+          });
+          row.addEventListener("mouseleave", function () {
+            this.style.transform = "scale(1)";
+          });
+        });
+
+        // إضافة الرسوم المتحركة لعناصر الجدول الزمني
+        const timelineItems = document.querySelectorAll(".timeline-item");
+        timelineItems.forEach((item, index) => {
+          item.style.animationDelay = `${index * 0.2}s`;
+          item.style.opacity = "0";
+          item.style.animation = "fadeInUp 0.6s ease forwards";
+        });
+      });
+
+      // إضافة الرسوم المتحركة CSS
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>

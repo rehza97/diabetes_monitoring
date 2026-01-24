@@ -1,0 +1,312 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isDoctor() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor';
+    }
+    
+    function isNurse() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'nurse';
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function getUserRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAssignedDoctor(patientId) {
+      return isDoctor() && 
+             resource.data.doctorId == request.auth.uid;
+    }
+    
+    function isAssignedNurse(patientId) {
+      return isNurse() && 
+             resource.data.nurseId == request.auth.uid;
+    }
+    
+    function canAccessPatient(patientId) {
+      return isAdmin() || 
+             (isDoctor() && resource.data.doctorId == request.auth.uid) ||
+             (isNurse() && resource.data.nurseId == request.auth.uid);
+    }
+    
+    // Users Collection
+    match /users/{userId} {
+      // Allow collection queries (list operations)
+      // For collection queries, Firestore evaluates the read rule for each document
+      // We need to allow the query itself, then filter results based on read permissions
+      allow list: if isAuthenticated();
+      
+      allow read: if isAuthenticated() && (
+        // Users can always read their own document (needed for role checks)
+        isOwner(userId) || 
+        // Admins can read any other user document
+        (userId != request.auth.uid && isAdmin()) || 
+        // Doctors can read other doctors and nurses
+        (userId != request.auth.uid && isDoctor() && 
+         exists(/databases/$(database)/documents/users/$(userId)) &&
+         (get(/databases/$(database)/documents/users/$(userId)).data.role == 'doctor' || 
+          get(/databases/$(database)/documents/users/$(userId)).data.role == 'nurse'))
+      );
+      
+      allow create: if isAuthenticated() && (
+        isAdmin() || 
+        // Allow users to create their own document if it doesn't exist
+        (isOwner(userId) && 
+         !exists(/databases/$(database)/documents/users/$(userId)) &&
+         request.resource.data.id == userId &&
+         request.resource.data.role in ['admin', 'doctor', 'nurse'] &&
+         request.resource.data.isActive == true
+        )
+      );
+      
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'avatar', 'phone', 'lastLogin']))
+      );
+      
+      allow delete: if isAdmin();
+      
+      // User Subcollections
+      match /notifications/{notificationId} {
+        allow read: if isOwner(userId);
+        allow create: if isAuthenticated(); // System can create
+        allow update: if isOwner(userId) && 
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']);
+        allow delete: if isOwner(userId);
+      }
+      
+      match /sessions/{sessionId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+    
+    // Patients Collection
+    match /patients/{patientId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        (isDoctor() && resource.data.doctorId == request.auth.uid) ||
+        (isNurse() && resource.data.nurseId == request.auth.uid)
+      );
+      
+      allow create: if isDoctor() || isAdmin();
+      
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        isAssignedDoctor(patientId) ||
+        (isNurse() && resource.data.nurseId == request.auth.uid && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lastReadingDate', 'lastReadingValue', 'lastReadingStatus', 'totalReadingsCount', 'averageReadingValue']))
+      );
+      
+      allow delete: if isAdmin();
+      
+      // Readings Subcollection
+      match /readings/{readingId} {
+        allow read: if canAccessPatient(patientId);
+        allow create: if isAuthenticated() && (
+          isAdmin() || 
+          isAssignedDoctor(patientId) || 
+          isAssignedNurse(patientId)
+        );
+        allow update: if isAuthenticated() && (
+          isAdmin() || 
+          (isDoctor() && resource.data.recordedById == request.auth.uid) ||
+          (isDoctor() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isVerified', 'verifiedById', 'verifiedAt']))
+        );
+        allow delete: if isAdmin() || (isDoctor() && resource.data.recordedById == request.auth.uid);
+      }
+      
+      // Medical Notes Subcollection
+      match /medicalNotes/{noteId} {
+        allow read: if canAccessPatient(patientId);
+        allow create: if isAuthenticated() && (
+          isAdmin() || 
+          isAssignedDoctor(patientId)
+        );
+        allow update: if isAuthenticated() && (
+          isAdmin() || 
+          (isDoctor() && resource.data.doctorId == request.auth.uid)
+        );
+        allow delete: if isAdmin() || (isDoctor() && resource.data.doctorId == request.auth.uid);
+      }
+      
+      // Medications Subcollection
+      match /medications/{medicationId} {
+        allow read: if canAccessPatient(patientId);
+        allow create: if isAuthenticated() && (
+          isAdmin() || 
+          isAssignedDoctor(patientId)
+        );
+        allow update: if isAuthenticated() && (
+          isAdmin() || 
+          (isDoctor() && resource.data.prescribedById == request.auth.uid)
+        );
+        allow delete: if isAdmin() || (isDoctor() && resource.data.prescribedById == request.auth.uid);
+      }
+      
+      // Scheduled Readings Subcollection
+      match /scheduledReadings/{scheduledId} {
+        allow read: if canAccessPatient(patientId);
+        allow create: if isAuthenticated() && (
+          isAdmin() || 
+          isAssignedDoctor(patientId) || 
+          isAssignedNurse(patientId)
+        );
+        allow update: if isAuthenticated() && (
+          isAdmin() || 
+          isAssignedDoctor(patientId) || 
+          (isNurse() && resource.data.assignedToNurseId == request.auth.uid)
+        );
+        allow delete: if isAdmin() || isAssignedDoctor(patientId);
+      }
+      
+      // Documents Subcollection
+      match /documents/{documentId} {
+        allow read: if canAccessPatient(patientId);
+        allow create: if isAuthenticated() && (
+          isAdmin() || 
+          isAssignedDoctor(patientId)
+        );
+        allow update: if isAuthenticated() && (
+          isAdmin() || 
+          (isDoctor() && resource.data.uploadedById == request.auth.uid)
+        );
+        allow delete: if isAdmin() || (isDoctor() && resource.data.uploadedById == request.auth.uid);
+      }
+      
+      // Alerts Subcollection
+      match /alerts/{alertId} {
+        allow read: if canAccessPatient(patientId);
+        allow create: if isAuthenticated(); // System and authenticated users can create alerts
+        allow update: if isAuthenticated() && (
+          isAdmin() || 
+          isAssignedDoctor(patientId) ||
+          (isNurse() && get(/databases/$(database)/documents/patients/$(patientId)).data.nurseId == request.auth.uid && 
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isResolved', 'resolvedById', 'resolvedAt', 'acknowledgedBy', 'updatedAt']))
+        );
+        allow delete: if isAdmin();
+      }
+    }
+    
+    // Reports Collection
+    match /reports/{reportId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.createdById == request.auth.uid
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.createdById == request.auth.uid
+      );
+      allow delete: if isAdmin() || resource.data.createdById == request.auth.uid;
+      
+      // Exports Subcollection
+      match /exports/{exportId} {
+        allow read: if isAuthenticated() && (
+          isAdmin() || 
+          get(/databases/$(database)/documents/reports/$(reportId)).data.createdById == request.auth.uid
+        );
+        allow create: if isAuthenticated();
+        allow delete: if isAdmin();
+      }
+    }
+    
+    // Audit Logs Collection
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if false; // Only Cloud Functions can create
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    // Settings Collection
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Messages Collection
+    match /messages/{messageId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.senderId == request.auth.uid || 
+        resource.data.recipientId == request.auth.uid
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        (resource.data.recipientId == request.auth.uid && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']))
+      );
+      allow delete: if isAdmin() || 
+                       resource.data.senderId == request.auth.uid || 
+                       resource.data.recipientId == request.auth.uid;
+    }
+    
+    // System Health Collection
+    match /systemHealth/{healthId} {
+      allow read: if isAdmin();
+      allow create: if false; // Only Cloud Functions
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    // Backups Collection
+    match /backups/{backupId} {
+      allow read: if isAdmin();
+      allow create: if false; // Only Cloud Functions
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+    
+    // Collection Group Queries for Readings
+    // Collection group queries need explicit rules - they don't inherit from subcollection rules
+    // Path pattern: patients/{patientId}/readings/{readingId}
+    match /patients/{patientId}/readings/{readingId} {
+      // This rule applies to collection group queries on readings
+      // It duplicates the access logic from the subcollection rule above
+      allow read: if isAuthenticated() && (
+        // Admins can read all readings without any restrictions (checked first for performance)
+        // Explicit check: verify user document exists and has admin role
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        // Doctors can read readings from their assigned patients
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor' &&
+         exists(/databases/$(database)/documents/patients/$(patientId)) &&
+         get(/databases/$(database)/documents/patients/$(patientId)).data.doctorId == request.auth.uid) ||
+        // Nurses can read readings from their assigned patients
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'nurse' &&
+         exists(/databases/$(database)/documents/patients/$(patientId)) &&
+         get(/databases/$(database)/documents/patients/$(patientId)).data.nurseId == request.auth.uid)
+      );
+    }
+  }
+}
