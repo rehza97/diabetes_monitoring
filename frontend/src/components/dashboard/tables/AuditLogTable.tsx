@@ -124,7 +124,9 @@ export function AuditLogTable({
               >
                 Date/Heure
                 {sortColumn === "created_at" && (
-                  <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                  <span className="ml-1">
+                    {sortDirection === "asc" ? "↑" : "↓"}
+                  </span>
                 )}
               </TableHead>
               <TableHead>Utilisateur</TableHead>
@@ -134,7 +136,9 @@ export function AuditLogTable({
               >
                 Action
                 {sortColumn === "action" && (
-                  <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                  <span className="ml-1">
+                    {sortDirection === "asc" ? "↑" : "↓"}
+                  </span>
                 )}
               </TableHead>
               <TableHead>Type d'entité</TableHead>
@@ -152,7 +156,9 @@ export function AuditLogTable({
                 <TableCell>
                   <div>
                     <div className="font-medium">{log.user.name}</div>
-                    <div className="text-xs text-muted-foreground">{log.user.email}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {log.user.email}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -165,7 +171,9 @@ export function AuditLogTable({
                     {entityTypeLabels[log.entity_type]}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-mono text-sm">{log.entity_id.slice(0, 8)}</TableCell>
+                <TableCell className="font-mono text-sm">
+                  {log.entity_id.slice(0, 8)}
+                </TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">
                   {log.ip_address}
                 </TableCell>
@@ -212,11 +220,15 @@ export function AuditLogTable({
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <Label className="text-sm font-medium">Utilisateur</Label>
-                  <p className="text-sm">{selectedLog.user.name} ({selectedLog.user.email})</p>
+                  <p className="text-sm">
+                    {selectedLog.user.name} ({selectedLog.user.email})
+                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Date/Heure</Label>
-                  <p className="text-sm">{formatDateTime(selectedLog.created_at)}</p>
+                  <p className="text-sm">
+                    {formatDateTime(selectedLog.created_at)}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Action</Label>
@@ -226,7 +238,9 @@ export function AuditLogTable({
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Type d'entité</Label>
-                  <Badge variant="outline">{entityTypeLabels[selectedLog.entity_type]}</Badge>
+                  <Badge variant="outline">
+                    {entityTypeLabels[selectedLog.entity_type]}
+                  </Badge>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">ID Entité</Label>
@@ -240,11 +254,15 @@ export function AuditLogTable({
 
               {(selectedLog.old_data || selectedLog.new_data) && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Différence des données</Label>
+                  <Label className="text-sm font-medium">
+                    Différence des données
+                  </Label>
                   <div className="grid gap-4 md:grid-cols-2">
                     {selectedLog.old_data && (
                       <div className="p-3 bg-muted rounded-lg">
-                        <Label className="text-xs text-muted-foreground">Anciennes données</Label>
+                        <Label className="text-xs text-muted-foreground">
+                          Anciennes données
+                        </Label>
                         <pre className="text-xs mt-2 overflow-auto">
                           {JSON.stringify(selectedLog.old_data, null, 2)}
                         </pre>
@@ -252,7 +270,9 @@ export function AuditLogTable({
                     )}
                     {selectedLog.new_data && (
                       <div className="p-3 bg-muted rounded-lg">
-                        <Label className="text-xs text-muted-foreground">Nouvelles données</Label>
+                        <Label className="text-xs text-muted-foreground">
+                          Nouvelles données
+                        </Label>
                         <pre className="text-xs mt-2 overflow-auto">
                           {JSON.stringify(selectedLog.new_data, null, 2)}
                         </pre>
@@ -264,7 +284,9 @@ export function AuditLogTable({
 
               <div>
                 <Label className="text-sm font-medium">User Agent</Label>
-                <p className="text-xs text-muted-foreground break-all">{selectedLog.user_agent}</p>
+                <p className="text-xs text-muted-foreground break-all">
+                  {selectedLog.user_agent}
+                </p>
               </div>
             </div>
           </DialogContent>

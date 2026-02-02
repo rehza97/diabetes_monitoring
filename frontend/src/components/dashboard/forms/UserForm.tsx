@@ -53,7 +53,9 @@ interface UserFormProps {
 
 export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
   const isEdit = !!user;
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar || null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(
+    user?.avatar || null,
+  );
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -65,15 +67,22 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
     setValue,
   } = useForm<UserFormData>({
     resolver: zodResolver(
-      createUserSchema.extend({
-        password: isEdit
-          ? z.string().optional()
-          : z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-        confirmPassword: z.string().optional(),
-      }).refine((data) => !data.password || data.password === data.confirmPassword, {
-        message: "Les mots de passe ne correspondent pas",
-        path: ["confirmPassword"],
-      })
+      createUserSchema
+        .extend({
+          password: isEdit
+            ? z.string().optional()
+            : z
+                .string()
+                .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+          confirmPassword: z.string().optional(),
+        })
+        .refine(
+          (data) => !data.password || data.password === data.confirmPassword,
+          {
+            message: "Les mots de passe ne correspondent pas",
+            path: ["confirmPassword"],
+          },
+        ),
     ) as Resolver<UserFormData>,
     defaultValues: user
       ? {
@@ -97,12 +106,38 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
     if (isOpen) {
       // Log the user data received by the form
       if (user) {
-        console.group("📝 [UserForm] User data received and form initialization");
+        console.group(
+          "📝 [UserForm] User data received and form initialization",
+        );
         console.log("User prop received:", user);
-        console.log("  phone:", user.phone, "(type:", typeof user.phone, ", value:", JSON.stringify(user.phone), ")");
-        console.log("  license_number:", user.license_number, "(type:", typeof user.license_number, ", value:", JSON.stringify(user.license_number), ")");
-        console.log("  specialization:", user.specialization, "(type:", typeof user.specialization, ", value:", JSON.stringify(user.specialization), ")");
-        
+        console.log(
+          "  phone:",
+          user.phone,
+          "(type:",
+          typeof user.phone,
+          ", value:",
+          JSON.stringify(user.phone),
+          ")",
+        );
+        console.log(
+          "  license_number:",
+          user.license_number,
+          "(type:",
+          typeof user.license_number,
+          ", value:",
+          JSON.stringify(user.license_number),
+          ")",
+        );
+        console.log(
+          "  specialization:",
+          user.specialization,
+          "(type:",
+          typeof user.specialization,
+          ", value:",
+          JSON.stringify(user.specialization),
+          ")",
+        );
+
         const formData = {
           first_name: user.first_name,
           last_name: user.last_name,
@@ -113,18 +148,18 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
           license_number: user.license_number || "",
           is_active: user.is_active,
         };
-        
+
         console.log("Form data being set to react-hook-form:");
         console.table(formData);
         console.log("Full formData object:", formData);
         console.groupEnd();
-        
+
         reset(formData);
       } else {
         console.log("[UserForm] No user prop - creating new user");
         reset({ is_active: true });
       }
-      
+
       setAvatarPreview(user?.avatar || null);
     }
   }, [isOpen, user, reset]);
@@ -155,7 +190,9 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Modifier l'utilisateur" : "Ajouter un utilisateur"}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Modifier l'utilisateur" : "Ajouter un utilisateur"}
+          </DialogTitle>
           <DialogDescription>
             {isEdit
               ? "Modifiez les informations de l'utilisateur."
@@ -163,7 +200,10 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onFormSubmit as SubmitHandler<UserFormData>)} className="space-y-4">
+        <form
+          onSubmit={handleSubmit(onFormSubmit as SubmitHandler<UserFormData>)}
+          className="space-y-4"
+        >
           {/* Avatar Upload */}
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20">
@@ -218,7 +258,9 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
                 aria-invalid={errors.first_name ? "true" : "false"}
               />
               {errors.first_name && (
-                <p className="text-sm text-destructive">{errors.first_name.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.first_name.message}
+                </p>
               )}
             </div>
 
@@ -232,7 +274,9 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
                 aria-invalid={errors.last_name ? "true" : "false"}
               />
               {errors.last_name && (
-                <p className="text-sm text-destructive">{errors.last_name.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.last_name.message}
+                </p>
               )}
             </div>
           </div>
@@ -249,7 +293,9 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
                 aria-invalid={errors.email ? "true" : "false"}
               />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -257,7 +303,9 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
               <Label htmlFor="phone">Téléphone</Label>
               <Input id="phone" {...register("phone")} />
               {errors.phone && (
-                <p className="text-sm text-destructive">{errors.phone.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.phone.message}
+                </p>
               )}
             </div>
           </div>
@@ -268,7 +316,9 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
             </Label>
             <Select
               value={watch("role") || ""}
-              onValueChange={(value) => setValue("role", value as "admin" | "doctor" | "nurse")}
+              onValueChange={(value) =>
+                setValue("role", value as "admin" | "doctor" | "nurse")
+              }
             >
               <SelectTrigger id="role">
                 <SelectValue placeholder="Sélectionner un rôle" />
@@ -312,12 +362,16 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
                   aria-invalid={errors.password ? "true" : "false"}
                 />
                 {errors.password && (
-                  <p className="text-sm text-destructive">{errors.password.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.password.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <Label htmlFor="confirmPassword">
+                  Confirmer le mot de passe
+                </Label>
                 <Input
                   id="confirmPassword"
                   type={showPassword ? "text" : "password"}
@@ -325,7 +379,9 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
                   aria-invalid={errors.confirmPassword ? "true" : "false"}
                 />
                 {errors.confirmPassword && (
-                  <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.confirmPassword.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -335,7 +391,9 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
             <Checkbox
               id="is_active"
               checked={watch("is_active")}
-              onCheckedChange={(checked) => setValue("is_active", checked as boolean)}
+              onCheckedChange={(checked) =>
+                setValue("is_active", checked as boolean)
+              }
             />
             <Label htmlFor="is_active" className="cursor-pointer">
               Utilisateur actif
@@ -343,7 +401,12 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
               Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
@@ -352,8 +415,10 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
                   <LoadingSpinner size="sm" className="mr-2" />
                   {isEdit ? "Modification..." : "Création..."}
                 </>
+              ) : isEdit ? (
+                "Modifier"
               ) : (
-                isEdit ? "Modifier" : "Créer"
+                "Créer"
               )}
             </Button>
           </DialogFooter>

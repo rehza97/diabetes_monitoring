@@ -4,7 +4,10 @@ import { query, where, orderBy } from "firebase/firestore";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { UsersTable } from "@/components/dashboard/tables/UsersTable";
-import { UserFilters, type UserFiltersState } from "@/components/dashboard/filters/UserFilters";
+import {
+  UserFilters,
+  type UserFiltersState,
+} from "@/components/dashboard/filters/UserFilters";
 import { UserForm } from "@/components/dashboard/forms/UserForm";
 import { BulkActions } from "@/components/dashboard/BulkActions";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -13,21 +16,41 @@ import { Plus, Download, Trash2 } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
 import { useUsers } from "@/hooks/useFirestore";
 import { usersCollection } from "@/lib/firestore-helpers";
-import { updateUser, deleteUser, createUserWithAuth } from "@/lib/firestore-helpers";
+import {
+  updateUser,
+  deleteUser,
+  createUserWithAuth,
+} from "@/lib/firestore-helpers";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { FirestoreUser } from "@/types/firestore";
 import { exportUsersToExcel, exportUsersToCSV } from "@/utils/export";
 
 // Logging utility
-const logError = (context: string, error: unknown, details?: Record<string, unknown>) => {
+const logError = (
+  context: string,
+  error: unknown,
+  details?: Record<string, unknown>,
+) => {
   console.error(`[UsersManagementPage] Error in ${context}:`, error, details);
 };
 
-const logWarning = (context: string, message: string, details?: Record<string, unknown>) => {
-  console.warn(`[UsersManagementPage] Warning in ${context}:`, message, details);
+const logWarning = (
+  context: string,
+  message: string,
+  details?: Record<string, unknown>,
+) => {
+  console.warn(
+    `[UsersManagementPage] Warning in ${context}:`,
+    message,
+    details,
+  );
 };
 
-const logInfo = (context: string, message: string, details?: Record<string, unknown>) => {
+const logInfo = (
+  context: string,
+  message: string,
+  details?: Record<string, unknown>,
+) => {
   console.log(`[UsersManagementPage] Info in ${context}:`, message, details);
 };
 
@@ -37,18 +60,21 @@ export function UsersManagementPage() {
   const { user: currentUser } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   // UserForm expects snake_case format, so we store the transformed user
-  const [editingUser, setEditingUser] = useState<{
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone?: string;
-    role: "admin" | "doctor" | "nurse";
-    specialization?: string;
-    license_number?: string;
-    is_active: boolean;
-    avatar?: string;
-  } | undefined>();
+  const [editingUser, setEditingUser] = useState<
+    | {
+        id: string;
+        first_name: string;
+        last_name: string;
+        email: string;
+        phone?: string;
+        role: "admin" | "doctor" | "nurse";
+        specialization?: string;
+        license_number?: string;
+        is_active: boolean;
+        avatar?: string;
+      }
+    | undefined
+  >();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<UserFiltersState>({
     search: "",
@@ -69,15 +95,15 @@ export function UsersManagementPage() {
   const usersQuery = useMemo(() => {
     try {
       const constraints: any[] = [orderBy("createdAt", "desc")];
-      
+
       if (filters.role !== "all") {
         constraints.push(where("role", "==", filters.role));
       }
-      
+
       if (filters.status !== "all") {
         constraints.push(where("isActive", "==", filters.status === "active"));
       }
-      
+
       const q = query(usersCollection, ...constraints);
       logInfo("usersQuery", "Query created successfully", { filters });
       return q;
@@ -96,7 +122,9 @@ export function UsersManagementPage() {
     if (editUserId && users && users.length > 0 && !isFormOpen) {
       const userToEdit = users.find((u) => u.id === editUserId);
       if (userToEdit) {
-        logInfo("editFromQuery", "Opening edit form from URL parameter", { userId: editUserId });
+        logInfo("editFromQuery", "Opening edit form from URL parameter", {
+          userId: editUserId,
+        });
         // Transform FirestoreUser (camelCase) to UserForm format (snake_case)
         const formUser = {
           id: userToEdit.id,
@@ -119,7 +147,9 @@ export function UsersManagementPage() {
           return newParams;
         });
       } else {
-        logWarning("editFromQuery", "User not found for edit parameter", { userId: editUserId });
+        logWarning("editFromQuery", "User not found for edit parameter", {
+          userId: editUserId,
+        });
       }
     }
   }, [users, searchParams, isFormOpen, setSearchParams]);
@@ -128,19 +158,45 @@ export function UsersManagementPage() {
   useEffect(() => {
     if (users && users.length > 0) {
       const firstUser = users[0];
-      
+
       // Log to console with clear formatting
       console.group("🔍 [UsersManagementPage] Raw User Data from Firestore");
       console.log("User ID:", firstUser.id);
       console.log("All field names:", Object.keys(firstUser));
       console.log("Full user object:", firstUser);
-      console.log("Phone value:", firstUser.phone, "(type:", typeof firstUser.phone, ")");
-      console.log("LicenseNumber value:", firstUser.licenseNumber, "(type:", typeof firstUser.licenseNumber, ")");
-      console.log("Specialization value:", firstUser.specialization, "(type:", typeof firstUser.specialization, ")");
+      console.log(
+        "Phone value:",
+        firstUser.phone,
+        "(type:",
+        typeof firstUser.phone,
+        ")",
+      );
+      console.log(
+        "LicenseNumber value:",
+        firstUser.licenseNumber,
+        "(type:",
+        typeof firstUser.licenseNumber,
+        ")",
+      );
+      console.log(
+        "Specialization value:",
+        firstUser.specialization,
+        "(type:",
+        typeof firstUser.specialization,
+        ")",
+      );
       console.table({
         field: ["phone", "licenseNumber", "specialization"],
-        value: [firstUser.phone, firstUser.licenseNumber, firstUser.specialization],
-        type: [typeof firstUser.phone, typeof firstUser.licenseNumber, typeof firstUser.specialization],
+        value: [
+          firstUser.phone,
+          firstUser.licenseNumber,
+          firstUser.specialization,
+        ],
+        type: [
+          typeof firstUser.phone,
+          typeof firstUser.licenseNumber,
+          typeof firstUser.specialization,
+        ],
         exists: [
           firstUser.phone !== undefined,
           firstUser.licenseNumber !== undefined,
@@ -148,7 +204,7 @@ export function UsersManagementPage() {
         ],
       });
       console.groupEnd();
-      
+
       logInfo("rawUserData", "Raw user data structure from Firestore", {
         userId: firstUser.id,
         allFields: Object.keys(firstUser),
@@ -172,12 +228,12 @@ export function UsersManagementPage() {
   // Log errors when they occur
   useEffect(() => {
     if (error) {
-      const errorDetails: Record<string, unknown> = { 
+      const errorDetails: Record<string, unknown> = {
         query: "usersQuery",
         message: error.message,
         name: error.name,
       };
-      if ('code' in error) {
+      if ("code" in error) {
         errorDetails.code = (error as any).code;
       }
       logError("usersFetch", error, errorDetails);
@@ -187,7 +243,7 @@ export function UsersManagementPage() {
   // Filter and transform users to match table format
   const filteredUsers = useMemo(() => {
     if (!users) return [];
-    
+
     return users
       .filter((user) => {
         if (filters.search) {
@@ -208,7 +264,8 @@ export function UsersManagementPage() {
         role: user.role,
         is_active: user.isActive ?? true,
         avatar: user.avatar,
-        created_at: user.createdAt?.toDate().toISOString() || new Date().toISOString(),
+        created_at:
+          user.createdAt?.toDate().toISOString() || new Date().toISOString(),
         last_login: user.lastLogin?.toDate().toISOString(),
         // Store original FirestoreUser for edit/delete operations
         _originalUser: user,
@@ -230,7 +287,7 @@ export function UsersManagementPage() {
     console.log("  lastName:", user.lastName);
     console.log("  phone:", user.phone);
     console.log("  licenseNumber:", user.licenseNumber);
-    
+
     // Transform FirestoreUser (camelCase) to UserForm format (snake_case)
     const formUser = {
       id: user.id,
@@ -244,26 +301,30 @@ export function UsersManagementPage() {
       is_active: user.isActive ?? true,
       avatar: user.avatar,
     };
-    
+
     console.log("🔍 [handleEditUser] Transformed formUser:", formUser);
     console.log("  first_name:", formUser.first_name);
     console.log("  last_name:", formUser.last_name);
     console.log("  phone:", formUser.phone);
     console.log("  license_number:", formUser.license_number);
-    
+
     setEditingUser(formUser);
     setIsFormOpen(true);
   };
 
   const handleDeleteUser = async (user: FirestoreUser) => {
-    const fullName = `${user.firstName} ${user.lastName}`.trim() || "Utilisateur";
-    
+    const fullName =
+      `${user.firstName} ${user.lastName}`.trim() || "Utilisateur";
+
     if (!confirm(`Êtes-vous sûr de vouloir supprimer ${fullName} ?`)) {
       return;
     }
-    
+
     try {
-      logInfo("deleteUser", "Deleting user", { userId: user.id, userName: fullName });
+      logInfo("deleteUser", "Deleting user", {
+        userId: user.id,
+        userName: fullName,
+      });
       await deleteUser(user.id);
       logInfo("deleteUser", "User deleted successfully", { userId: user.id });
       addNotification({
@@ -283,11 +344,18 @@ export function UsersManagementPage() {
 
   const handleToggleActive = async (user: FirestoreUser) => {
     try {
-      const fullName = `${user.firstName} ${user.lastName}`.trim() || "Utilisateur";
-      
-      logInfo("toggleActive", "Toggling user active status", { userId: user.id, currentStatus: user.isActive });
+      const fullName =
+        `${user.firstName} ${user.lastName}`.trim() || "Utilisateur";
+
+      logInfo("toggleActive", "Toggling user active status", {
+        userId: user.id,
+        currentStatus: user.isActive,
+      });
       await updateUser(user.id, { isActive: !user.isActive });
-      logInfo("toggleActive", "User status updated successfully", { userId: user.id, newStatus: !user.isActive });
+      logInfo("toggleActive", "User status updated successfully", {
+        userId: user.id,
+        newStatus: !user.isActive,
+      });
       addNotification({
         type: "success",
         title: user.isActive ? "Utilisateur désactivé" : "Utilisateur activé",
@@ -315,10 +383,13 @@ export function UsersManagementPage() {
         const role = data.role;
         const specialization = data.specialization;
         const licenseNumber = data.license_number || data.licenseNumber;
-        const isActive = data.is_active !== undefined ? data.is_active : (data.isActive ?? editingUser?.is_active ?? true);
+        const isActive =
+          data.is_active !== undefined
+            ? data.is_active
+            : (data.isActive ?? editingUser?.is_active ?? true);
 
         logInfo("updateUser", "Updating user", { userId: editingUser.id });
-        
+
         // Build update object, only including defined values
         const updateData: Partial<FirestoreUser> = {
           firstName,
@@ -328,7 +399,7 @@ export function UsersManagementPage() {
           role,
           isActive,
         };
-        
+
         // Only include optional fields if they have values
         if (specialization) {
           updateData.specialization = specialization;
@@ -336,9 +407,11 @@ export function UsersManagementPage() {
         if (licenseNumber) {
           updateData.licenseNumber = licenseNumber;
         }
-        
+
         await updateUser(editingUser.id, updateData);
-        logInfo("updateUser", "User updated successfully", { userId: editingUser.id });
+        logInfo("updateUser", "User updated successfully", {
+          userId: editingUser.id,
+        });
         addNotification({
           type: "success",
           title: "Utilisateur modifié",
@@ -347,7 +420,9 @@ export function UsersManagementPage() {
       } else {
         // Create new user using Cloud Function
         if (!data.password) {
-          logError("createUser", new Error("Password is required"), { email: data.email });
+          logError("createUser", new Error("Password is required"), {
+            email: data.email,
+          });
           addNotification({
             type: "error",
             title: "Erreur",
@@ -364,9 +439,15 @@ export function UsersManagementPage() {
         const role = data.role;
         const specialization = data.specialization;
         const licenseNumber = data.license_number || data.licenseNumber;
-        const isActive = data.is_active !== undefined ? data.is_active : (data.isActive ?? true);
+        const isActive =
+          data.is_active !== undefined
+            ? data.is_active
+            : (data.isActive ?? true);
 
-        logInfo("createUser", "Creating user with Firebase Auth", { email, role });
+        logInfo("createUser", "Creating user with Firebase Auth", {
+          email,
+          role,
+        });
         const result = await createUserWithAuth({
           email,
           password: data.password,
@@ -378,7 +459,10 @@ export function UsersManagementPage() {
           licenseNumber,
           isActive,
         });
-        logInfo("createUser", "User created successfully", { userId: result.userId, email: result.email });
+        logInfo("createUser", "User created successfully", {
+          userId: result.userId,
+          email: result.email,
+        });
         addNotification({
           type: "success",
           title: "Utilisateur créé",
@@ -388,7 +472,10 @@ export function UsersManagementPage() {
       setIsFormOpen(false);
       setEditingUser(undefined);
     } catch (error) {
-      logError("formSubmit", error, { isEdit: !!editingUser, userId: editingUser?.id });
+      logError("formSubmit", error, {
+        isEdit: !!editingUser,
+        userId: editingUser?.id,
+      });
       addNotification({
         type: "error",
         title: "Erreur",
@@ -399,31 +486,38 @@ export function UsersManagementPage() {
 
   const handleExport = (format: "excel" | "csv" = "excel") => {
     try {
-      logInfo("exportUsers", "Exporting users", { format, count: filteredUsers.length });
+      logInfo("exportUsers", "Exporting users", {
+        format,
+        count: filteredUsers.length,
+      });
       if (format === "excel") {
-        exportUsersToExcel(filteredUsers.map(u => ({
-          id: u.id,
-          firstName: u.first_name,
-          lastName: u.last_name,
-          email: u.email,
-          role: u.role,
-          phone: "",
-          isActive: u.is_active,
-          createdAt: undefined,
-          lastLogin: undefined,
-        })) as unknown as Parameters<typeof exportUsersToExcel>[0]);
+        exportUsersToExcel(
+          filteredUsers.map((u) => ({
+            id: u.id,
+            firstName: u.first_name,
+            lastName: u.last_name,
+            email: u.email,
+            role: u.role,
+            phone: "",
+            isActive: u.is_active,
+            createdAt: undefined,
+            lastLogin: undefined,
+          })) as unknown as Parameters<typeof exportUsersToExcel>[0],
+        );
       } else {
-        exportUsersToCSV(filteredUsers.map(u => ({
-          id: u.id,
-          firstName: u.first_name,
-          lastName: u.last_name,
-          email: u.email,
-          role: u.role,
-          phone: "",
-          isActive: u.is_active,
-          createdAt: undefined,
-          lastLogin: undefined,
-        })) as unknown as Parameters<typeof exportUsersToCSV>[0]);
+        exportUsersToCSV(
+          filteredUsers.map((u) => ({
+            id: u.id,
+            firstName: u.first_name,
+            lastName: u.last_name,
+            email: u.email,
+            role: u.role,
+            phone: "",
+            isActive: u.is_active,
+            createdAt: undefined,
+            lastLogin: undefined,
+          })) as unknown as Parameters<typeof exportUsersToCSV>[0],
+        );
       }
       logInfo("exportUsers", "Export completed successfully", { format });
       addNotification({
@@ -443,14 +537,23 @@ export function UsersManagementPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.length} utilisateur(s) ?`)) {
+    if (
+      !confirm(
+        `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} utilisateur(s) ?`,
+      )
+    ) {
       return;
     }
-    
+
     try {
-      logInfo("bulkDelete", "Bulk deleting users", { count: selectedIds.length, userIds: selectedIds });
-      await Promise.all(selectedIds.map(id => deleteUser(id)));
-      logInfo("bulkDelete", "Bulk delete completed successfully", { count: selectedIds.length });
+      logInfo("bulkDelete", "Bulk deleting users", {
+        count: selectedIds.length,
+        userIds: selectedIds,
+      });
+      await Promise.all(selectedIds.map((id) => deleteUser(id)));
+      logInfo("bulkDelete", "Bulk delete completed successfully", {
+        count: selectedIds.length,
+      });
       addNotification({
         type: "success",
         title: "Utilisateurs supprimés",
@@ -479,10 +582,14 @@ export function UsersManagementPage() {
   }
 
   if (error) {
-    logError("pageRender", "Rendering error state", { errorMessage: error.message });
+    logError("pageRender", "Rendering error state", {
+      errorMessage: error.message,
+    });
     return (
       <DashboardLayout>
-        <ErrorMessage message={`Erreur lors du chargement des utilisateurs: ${error.message}`} />
+        <ErrorMessage
+          message={`Erreur lors du chargement des utilisateurs: ${error.message}`}
+        />
       </DashboardLayout>
     );
   }
@@ -492,7 +599,9 @@ export function UsersManagementPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Gestion des utilisateurs</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Gestion des utilisateurs
+            </h1>
             <p className="text-muted-foreground mt-1">
               Gérez les médecins, infirmières et administrateurs du système
             </p>

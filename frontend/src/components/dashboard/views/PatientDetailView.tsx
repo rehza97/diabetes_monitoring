@@ -1,7 +1,13 @@
 import { useMemo, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,25 +33,41 @@ import {
   Trash2,
   Eye,
 } from "lucide-react";
-import { formatDate, formatDateTime, calculateAge, calculateBMI } from "@/utils/formatters";
+import {
+  formatDate,
+  formatDateTime,
+  calculateAge,
+  calculateBMI,
+} from "@/utils/formatters";
 import { getInitials, formatFullName, getReadingStatus } from "@/utils/helpers";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Inbox } from "lucide-react";
 import { usePatient } from "@/hooks/useFirestore";
 import { useRecentItems } from "@/hooks/useRecentItems";
-import { 
-  useRealtimeReadings, 
-  useRealtimeMedications, 
+import {
+  useRealtimeReadings,
+  useRealtimeMedications,
   useRealtimeMedicalNotes,
   useRealtimePatientAlerts,
 } from "@/hooks/useRealtime";
 import { useRealtimeAuditLogs } from "@/hooks/useRealtime";
-import { auditLogsCollection, getPatientDocuments, createPatientDocument } from "@/lib/firestore-helpers";
+import {
+  auditLogsCollection,
+  getPatientDocuments,
+  createPatientDocument,
+} from "@/lib/firestore-helpers";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useNotification } from "@/context/NotificationContext";
 import { MedicalNoteForm } from "@/components/dashboard/forms/MedicalNoteForm";
 import { MedicationForm } from "@/components/dashboard/forms/MedicationForm";
-import { createMedicalNote, updateMedicalNote, deleteMedicalNote, createMedication, updateMedication, deleteMedication } from "@/lib/firestore-helpers";
+import {
+  createMedicalNote,
+  updateMedicalNote,
+  deleteMedicalNote,
+  createMedication,
+  updateMedication,
+  deleteMedication,
+} from "@/lib/firestore-helpers";
 import {
   Dialog,
   DialogContent,
@@ -67,7 +89,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { query, where, orderBy, limit } from "firebase/firestore";
 import { useUsers } from "@/hooks/useFirestore";
 import { usersCollection } from "@/lib/firestore-helpers";
-import type { FirestorePatient, FirestoreUser, FirestoreMedicalNote, FirestoreMedication, MedicalNoteType } from "@/types/firestore";
+import type {
+  FirestorePatient,
+  FirestoreUser,
+  FirestoreMedicalNote,
+  FirestoreMedication,
+  MedicalNoteType,
+} from "@/types/firestore";
 
 const diabetesTypeLabels = {
   type1: "Type 1",
@@ -84,15 +112,18 @@ const noteTypeLabels: Record<string, string> = {
 
 // Debug logging utility
 const debugLog = (location: string, data?: any) => {
-  console.log(`[PatientDetailView] ${new Date().toISOString().split('T')[1]} ${location}`, data || '');
+  console.log(
+    `[PatientDetailView] ${new Date().toISOString().split("T")[1]} ${location}`,
+    data || "",
+  );
 };
 
 export function PatientDetailView() {
   debugLog("=== COMPONENT RENDER ===", { timestamp: new Date().toISOString() });
-  
+
   const { id } = useParams<{ id: string }>();
   debugLog("Route params", { id });
-  
+
   // Component lifecycle
   useEffect(() => {
     debugLog("Component mounted", { id });
@@ -100,56 +131,83 @@ export function PatientDetailView() {
       debugLog("Component unmounting", { id });
     };
   }, [id]);
-  
+
   const { addRecentItem } = useRecentItems();
-  
+
   // Fetch patient data
-  const { patient, loading: patientLoading, error: patientError } = usePatient(id || null);
-  
+  const {
+    patient,
+    loading: patientLoading,
+    error: patientError,
+  } = usePatient(id || null);
+
   useEffect(() => {
     debugLog("Patient data changed", {
       hasPatient: !!patient,
       patientId: patient?.id,
       loading: patientLoading,
       error: patientError?.message,
-      patientData: patient ? {
-        id: patient.id,
-        firstName: patient.firstName,
-        lastName: patient.lastName,
-        doctorId: patient.doctorId,
-        nurseId: patient.nurseId,
-        isActive: patient.isActive,
-      } : null,
+      patientData: patient
+        ? {
+            id: patient.id,
+            firstName: patient.firstName,
+            lastName: patient.lastName,
+            doctorId: patient.doctorId,
+            nurseId: patient.nurseId,
+            isActive: patient.isActive,
+          }
+        : null,
     });
   }, [patient, patientLoading, patientError]);
-  
+
   // Add to recent items when patient is loaded
   useEffect(() => {
     if (patient && id) {
       addRecentItem({
         id: id,
         type: "patient",
-        title: `${patient.firstName || ""} ${patient.lastName || ""}`.trim() || "Patient",
+        title:
+          `${patient.firstName || ""} ${patient.lastName || ""}`.trim() ||
+          "Patient",
         path: `/dashboard/patients/${id}`,
       });
     }
   }, [patient, id, addRecentItem]);
-  
+
   // Convert undefined to null for hooks that expect string | null
   const patientId = id ?? null;
-  
+
   // Memoize options to prevent infinite re-subscriptions
-  const readingsOptions = useMemo(() => ({ enabled: !!patientId }), [patientId]);
-  const medicationsOptions = useMemo(() => ({ enabled: !!patientId }), [patientId]);
+  const readingsOptions = useMemo(
+    () => ({ enabled: !!patientId }),
+    [patientId],
+  );
+  const medicationsOptions = useMemo(
+    () => ({ enabled: !!patientId }),
+    [patientId],
+  );
   const notesOptions = useMemo(() => ({ enabled: !!patientId }), [patientId]);
-  const alertsOptions = useMemo(() => ({ enabled: !!patientId, resolved: false }), [patientId]);
-  
+  const alertsOptions = useMemo(
+    () => ({ enabled: !!patientId, resolved: false }),
+    [patientId],
+  );
+
   // Fetch subcollections
-  const { data: readings, loading: readingsLoading } = useRealtimeReadings(patientId, readingsOptions);
-  const { data: medications, loading: medicationsLoading } = useRealtimeMedications(patientId, medicationsOptions);
-  const { data: medicalNotes, loading: notesLoading } = useRealtimeMedicalNotes(patientId, notesOptions);
-  const { data: alerts, loading: alertsLoading } = useRealtimePatientAlerts(patientId, alertsOptions);
-  
+  const { data: readings, loading: readingsLoading } = useRealtimeReadings(
+    patientId,
+    readingsOptions,
+  );
+  const { data: medications, loading: medicationsLoading } =
+    useRealtimeMedications(patientId, medicationsOptions);
+  const { data: medicalNotes, loading: notesLoading } = useRealtimeMedicalNotes(
+    patientId,
+    notesOptions,
+  );
+  const { data: alerts, loading: alertsLoading } = useRealtimePatientAlerts(
+    patientId,
+    alertsOptions,
+  );
+
   useEffect(() => {
     debugLog("Subcollections data", {
       readingsCount: readings?.length || 0,
@@ -161,26 +219,35 @@ export function PatientDetailView() {
       alertsCount: alerts?.length || 0,
       alertsLoading,
     });
-  }, [readings, readingsLoading, medications, medicationsLoading, medicalNotes, notesLoading, alerts, alertsLoading]);
-  
+  }, [
+    readings,
+    readingsLoading,
+    medications,
+    medicationsLoading,
+    medicalNotes,
+    notesLoading,
+    alerts,
+    alertsLoading,
+  ]);
+
   // Fetch users for doctor/nurse names
   const usersQuery = useMemo(() => {
     debugLog("Creating usersQuery");
     return query(usersCollection, where("isActive", "==", true));
   }, []);
   const { data: users } = useUsers(usersQuery);
-  
+
   useEffect(() => {
     debugLog("Users data", {
       usersCount: users?.length || 0,
-      userIds: users?.map(u => u.id).slice(0, 5),
+      userIds: users?.map((u) => u.id).slice(0, 5),
     });
   }, [users]);
-  
+
   const usersMap = useMemo(() => {
     debugLog("Building usersMap", { usersCount: users?.length || 0 });
     const map = new Map<string, FirestoreUser>();
-    users?.forEach(user => {
+    users?.forEach((user) => {
       if (user.id) map.set(user.id, user);
     });
     debugLog("usersMap built", { mapSize: map.size });
@@ -189,12 +256,15 @@ export function PatientDetailView() {
 
   // Medical Note Form State
   const [medicalNoteFormOpen, setMedicalNoteFormOpen] = useState(false);
-  const [editingNote, setEditingNote] = useState<FirestoreMedicalNote | null>(null);
-  
+  const [editingNote, setEditingNote] = useState<FirestoreMedicalNote | null>(
+    null,
+  );
+
   // Medication Form State
   const [medicationFormOpen, setMedicationFormOpen] = useState(false);
-  const [editingMedication, setEditingMedication] = useState<FirestoreMedication | null>(null);
-  
+  const [editingMedication, setEditingMedication] =
+    useState<FirestoreMedication | null>(null);
+
   const { addNotification } = useNotification();
   const { user: currentUser } = useAuth();
 
@@ -208,17 +278,26 @@ export function PatientDetailView() {
 
     try {
       if (editingNote) {
-        await updateMedicalNote(patient.id, editingNote.id, { ...data, noteType: data.noteType as MedicalNoteType });
+        await updateMedicalNote(patient.id, editingNote.id, {
+          ...data,
+          noteType: data.noteType as MedicalNoteType,
+        });
         addNotification({
           type: "success",
           title: "Note modifiée",
           message: "La note médicale a été modifiée avec succès.",
         });
       } else {
-        const doctorName = currentUser.first_name && currentUser.last_name
-          ? `${currentUser.first_name} ${currentUser.last_name}`.trim()
-          : undefined;
-        await createMedicalNote(patient.id, { ...data, noteType: data.noteType as MedicalNoteType }, currentUser.id, doctorName);
+        const doctorName =
+          currentUser.first_name && currentUser.last_name
+            ? `${currentUser.first_name} ${currentUser.last_name}`.trim()
+            : undefined;
+        await createMedicalNote(
+          patient.id,
+          { ...data, noteType: data.noteType as MedicalNoteType },
+          currentUser.id,
+          doctorName,
+        );
         addNotification({
           type: "success",
           title: "Note créée",
@@ -232,7 +311,9 @@ export function PatientDetailView() {
       addNotification({
         type: "error",
         title: "Erreur",
-        message: error?.message || "Une erreur est survenue lors de l'enregistrement de la note.",
+        message:
+          error?.message ||
+          "Une erreur est survenue lors de l'enregistrement de la note.",
       });
     }
   };
@@ -253,7 +334,9 @@ export function PatientDetailView() {
       addNotification({
         type: "error",
         title: "Erreur",
-        message: error?.message || "Une erreur est survenue lors de la suppression de la note.",
+        message:
+          error?.message ||
+          "Une erreur est survenue lors de la suppression de la note.",
       });
     }
   };
@@ -271,7 +354,9 @@ export function PatientDetailView() {
     try {
       const { Timestamp } = await import("firebase/firestore");
       const startDateTimestamp = Timestamp.fromDate(new Date(data.startDate));
-      const endDateTimestamp = data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : undefined;
+      const endDateTimestamp = data.endDate
+        ? Timestamp.fromDate(new Date(data.endDate))
+        : undefined;
 
       if (editingMedication) {
         await updateMedication(patient.id, editingMedication.id, {
@@ -288,17 +373,23 @@ export function PatientDetailView() {
           message: "Le médicament a été modifié avec succès.",
         });
       } else {
-        const doctorName = currentUser.first_name && currentUser.last_name
-          ? `${currentUser.first_name} ${currentUser.last_name}`.trim()
-          : undefined;
-        await createMedication(patient.id, {
-          medicationName: data.medicationName,
-          dosage: data.dosage,
-          frequency: data.frequency,
-          startDate: startDateTimestamp,
-          endDate: endDateTimestamp,
-          notes: data.notes || undefined,
-        }, currentUser.id, doctorName);
+        const doctorName =
+          currentUser.first_name && currentUser.last_name
+            ? `${currentUser.first_name} ${currentUser.last_name}`.trim()
+            : undefined;
+        await createMedication(
+          patient.id,
+          {
+            medicationName: data.medicationName,
+            dosage: data.dosage,
+            frequency: data.frequency,
+            startDate: startDateTimestamp,
+            endDate: endDateTimestamp,
+            notes: data.notes || undefined,
+          },
+          currentUser.id,
+          doctorName,
+        );
         addNotification({
           type: "success",
           title: "Médicament prescrit",
@@ -312,7 +403,9 @@ export function PatientDetailView() {
       addNotification({
         type: "error",
         title: "Erreur",
-        message: error?.message || "Une erreur est survenue lors de l'enregistrement du médicament.",
+        message:
+          error?.message ||
+          "Une erreur est survenue lors de l'enregistrement du médicament.",
       });
     }
   };
@@ -333,11 +426,13 @@ export function PatientDetailView() {
       addNotification({
         type: "error",
         title: "Erreur",
-        message: error?.message || "Une erreur est survenue lors de la suppression du médicament.",
+        message:
+          error?.message ||
+          "Une erreur est survenue lors de la suppression du médicament.",
       });
     }
   };
-  
+
   // Fetch audit logs for this patient
   const auditLogsQuery = useMemo(() => {
     debugLog("Creating auditLogsQuery", { id });
@@ -346,17 +441,18 @@ export function PatientDetailView() {
       return null;
     }
     const q = query(
-      auditLogsCollection, 
-      where("entityType", "==", "patient"), 
-      where("entityId", "==", id), 
-      orderBy("createdAt", "desc"), 
-      limit(100)
+      auditLogsCollection,
+      where("entityType", "==", "patient"),
+      where("entityId", "==", id),
+      orderBy("createdAt", "desc"),
+      limit(100),
     );
     debugLog("auditLogsQuery created", { hasQuery: !!q });
     return q;
   }, [id]);
-  const { data: auditLogs, loading: auditLogsLoading } = useRealtimeAuditLogs(auditLogsQuery);
-  
+  const { data: auditLogs, loading: auditLogsLoading } =
+    useRealtimeAuditLogs(auditLogsQuery);
+
   useEffect(() => {
     debugLog("Audit logs data", {
       auditLogsCount: auditLogs?.length || 0,
@@ -364,11 +460,11 @@ export function PatientDetailView() {
       queryId: id,
     });
   }, [auditLogs, auditLogsLoading, id]);
-  
+
   // Fetch documents
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(true);
-  
+
   useEffect(() => {
     const loadDocuments = async () => {
       debugLog("loadDocuments called", { id });
@@ -381,10 +477,14 @@ export function PatientDetailView() {
       try {
         debugLog("loadDocuments: fetching documents", { patientId: id });
         const docs = await getPatientDocuments(id);
-        debugLog("loadDocuments: documents fetched", { count: docs?.length || 0 });
+        debugLog("loadDocuments: documents fetched", {
+          count: docs?.length || 0,
+        });
         setDocuments(docs);
       } catch (error) {
-        debugLog("loadDocuments: ERROR", { error: error instanceof Error ? error.message : String(error) });
+        debugLog("loadDocuments: ERROR", {
+          error: error instanceof Error ? error.message : String(error),
+        });
         console.error("Error loading documents:", error);
       } finally {
         setDocumentsLoading(false);
@@ -396,11 +496,27 @@ export function PatientDetailView() {
 
   // Memoize loading calculation to prevent unnecessary re-renders
   const loading = useMemo(() => {
-    return patientLoading || readingsLoading || medicationsLoading || notesLoading || alertsLoading || auditLogsLoading || documentsLoading;
-  }, [patientLoading, readingsLoading, medicationsLoading, notesLoading, alertsLoading, auditLogsLoading, documentsLoading]);
-  
+    return (
+      patientLoading ||
+      readingsLoading ||
+      medicationsLoading ||
+      notesLoading ||
+      alertsLoading ||
+      auditLogsLoading ||
+      documentsLoading
+    );
+  }, [
+    patientLoading,
+    readingsLoading,
+    medicationsLoading,
+    notesLoading,
+    alertsLoading,
+    auditLogsLoading,
+    documentsLoading,
+  ]);
+
   const error = patientError;
-  
+
   useEffect(() => {
     debugLog("Loading state", {
       patientLoading,
@@ -412,8 +528,17 @@ export function PatientDetailView() {
       documentsLoading,
       totalLoading: loading,
     });
-  }, [patientLoading, readingsLoading, medicationsLoading, notesLoading, alertsLoading, auditLogsLoading, documentsLoading, loading]);
-  
+  }, [
+    patientLoading,
+    readingsLoading,
+    medicationsLoading,
+    notesLoading,
+    alertsLoading,
+    auditLogsLoading,
+    documentsLoading,
+    loading,
+  ]);
+
   useEffect(() => {
     if (error) {
       debugLog("ERROR detected", {
@@ -446,7 +571,11 @@ export function PatientDetailView() {
         <EmptyState
           icon={Inbox}
           title="Patient non trouvé"
-          description={error ? `Erreur: ${error.message}` : "Le patient demandé n'existe pas ou a été supprimé."}
+          description={
+            error
+              ? `Erreur: ${error.message}`
+              : "Le patient demandé n'existe pas ou a été supprimé."
+          }
         />
       </DashboardLayout>
     );
@@ -460,20 +589,31 @@ export function PatientDetailView() {
     nurseId: patient.nurseId,
   });
 
-  const age = patient.dateOfBirth ? calculateAge(patient.dateOfBirth.toDate().toISOString().split("T")[0]) : 0;
-  const bmi = patient.weight && patient.height ? calculateBMI(patient.weight, patient.height) : 0;
-  
-  const doctorName = patient.doctorId ? usersMap.get(patient.doctorId) : undefined;
+  const age = patient.dateOfBirth
+    ? calculateAge(patient.dateOfBirth.toDate().toISOString().split("T")[0])
+    : 0;
+  const bmi =
+    patient.weight && patient.height
+      ? calculateBMI(patient.weight, patient.height)
+      : 0;
+
+  const doctorName = patient.doctorId
+    ? usersMap.get(patient.doctorId)
+    : undefined;
   const nurseName = patient.nurseId ? usersMap.get(patient.nurseId) : undefined;
-  
+
   debugLog("Derived values calculated", {
     age,
     bmi,
-    doctorName: doctorName ? `${doctorName.firstName} ${doctorName.lastName}` : "Not found",
-    nurseName: nurseName ? `${nurseName.firstName} ${nurseName.lastName}` : "Not found",
+    doctorName: doctorName
+      ? `${doctorName.firstName} ${doctorName.lastName}`
+      : "Not found",
+    nurseName: nurseName
+      ? `${nurseName.firstName} ${nurseName.lastName}`
+      : "Not found",
     usersMapSize: usersMap.size,
   });
-  
+
   debugLog("Rendering main content", {
     readingsCount: readings?.length || 0,
     medicationsCount: medications?.length || 0,
@@ -496,7 +636,10 @@ export function PatientDetailView() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">
-                {formatFullName(patient.firstName || "", patient.lastName || "")}
+                {formatFullName(
+                  patient.firstName || "",
+                  patient.lastName || "",
+                )}
               </h1>
               <p className="text-muted-foreground mt-1">
                 Dossier: {patient.fileNumber || ""} • {age} ans
@@ -528,43 +671,76 @@ export function PatientDetailView() {
                 <div>
                   <p className="text-sm text-muted-foreground">Nom complet</p>
                   <p className="font-medium">
-                    {formatFullName(patient.firstName || "", patient.lastName || "")}
+                    {formatFullName(
+                      patient.firstName || "",
+                      patient.lastName || "",
+                    )}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Date de naissance</p>
+                  <p className="text-sm text-muted-foreground">
+                    Date de naissance
+                  </p>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">{patient.dateOfBirth ? formatDate(patient.dateOfBirth.toDate().toISOString().split("T")[0]) : "N/A"}</p>
+                    <p className="font-medium">
+                      {patient.dateOfBirth
+                        ? formatDate(
+                            patient.dateOfBirth
+                              .toDate()
+                              .toISOString()
+                              .split("T")[0],
+                          )
+                        : "N/A"}
+                    </p>
                   </div>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Téléphone</p>
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">{patient.phone || "Non renseigné"}</p>
+                    <p className="font-medium">
+                      {patient.phone || "Non renseigné"}
+                    </p>
                   </div>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">{patient.email || "Non renseigné"}</p>
+                    <p className="font-medium">
+                      {patient.email || "Non renseigné"}
+                    </p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Type de diabète</p>
+                  <p className="text-sm text-muted-foreground">
+                    Type de diabète
+                  </p>
                   <Badge variant="outline">
                     {diabetesTypeLabels[patient.diabetesType]}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Date de diagnostic</p>
-                  <p className="font-medium">{patient.diagnosisDate ? formatDate(patient.diagnosisDate.toDate().toISOString().split("T")[0]) : "N/A"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Date de diagnostic
+                  </p>
+                  <p className="font-medium">
+                    {patient.diagnosisDate
+                      ? formatDate(
+                          patient.diagnosisDate
+                            .toDate()
+                            .toISOString()
+                            .split("T")[0],
+                        )
+                      : "N/A"}
+                  </p>
                 </div>
                 {patient.bloodType && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Groupe sanguin</p>
+                    <p className="text-sm text-muted-foreground">
+                      Groupe sanguin
+                    </p>
                     <p className="font-medium">{patient.bloodType}</p>
                   </div>
                 )}
@@ -575,12 +751,24 @@ export function PatientDetailView() {
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-muted-foreground">Médecin responsable</p>
-                  <p className="font-medium">{doctorName ? `${doctorName.firstName || ""} ${doctorName.lastName || ""}`.trim() : "Non assigné"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Médecin responsable
+                  </p>
+                  <p className="font-medium">
+                    {doctorName
+                      ? `${doctorName.firstName || ""} ${doctorName.lastName || ""}`.trim()
+                      : "Non assigné"}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Infirmière responsable</p>
-                  <p className="font-medium">{nurseName ? `${nurseName.firstName || ""} ${nurseName.lastName || ""}`.trim() : "Non assignée"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Infirmière responsable
+                  </p>
+                  <p className="font-medium">
+                    {nurseName
+                      ? `${nurseName.firstName || ""} ${nurseName.lastName || ""}`.trim()
+                      : "Non assignée"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -616,27 +804,31 @@ export function PatientDetailView() {
                     { header: "Notes", accessor: "notes" },
                   ]}
                   data={(readings || []).slice(0, 20).map((reading) => {
-                    const status = reading.status || getReadingStatus(reading.value);
+                    const status =
+                      reading.status || getReadingStatus(reading.value);
                     return {
                       value: `${reading.value} ${reading.unit}`,
                       type: reading.readingType,
-                      date: formatDateTime(reading.date?.toDate().toISOString() || ""),
-                      recorded_by: reading.recordedByName || "Utilisateur inconnu",
+                      date: formatDateTime(
+                        reading.date?.toDate().toISOString() || "",
+                      ),
+                      recorded_by:
+                        reading.recordedByName || "Utilisateur inconnu",
                       status: (
                         <Badge
                           className={
                             status === "critical"
                               ? "bg-destructive/10 text-destructive"
                               : status === "warning"
-                              ? "bg-warning/10 text-warning"
-                              : "bg-success/10 text-success"
+                                ? "bg-warning/10 text-warning"
+                                : "bg-success/10 text-success"
                           }
                         >
                           {status === "critical"
                             ? "Critique"
                             : status === "warning"
-                            ? "Avertissement"
-                            : "Normal"}
+                              ? "Avertissement"
+                              : "Normal"}
                         </Badge>
                       ),
                       notes: reading.notes || "-",
@@ -659,33 +851,55 @@ export function PatientDetailView() {
           <TabsContent value="statistics" className="space-y-4">
             {(() => {
               const readingsList = readings || [];
-              const values = readingsList.map(r => r.value);
-              const avg = values.length > 0 ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0;
+              const values = readingsList.map((r) => r.value);
+              const avg =
+                values.length > 0
+                  ? Math.round(
+                      values.reduce((a, b) => a + b, 0) / values.length,
+                    )
+                  : 0;
               const min = values.length > 0 ? Math.min(...values) : 0;
               const max = values.length > 0 ? Math.max(...values) : 0;
-              const normalCount = readingsList.filter(r => r.status === "normal").length;
-              const warningCount = readingsList.filter(r => r.status === "warning").length;
-              const criticalCount = readingsList.filter(r => r.status === "critical").length;
-              const normalPercentage = readingsList.length > 0 ? Math.round((normalCount / readingsList.length) * 100) : 0;
-              
+              const normalCount = readingsList.filter(
+                (r) => r.status === "normal",
+              ).length;
+              const warningCount = readingsList.filter(
+                (r) => r.status === "warning",
+              ).length;
+              const criticalCount = readingsList.filter(
+                (r) => r.status === "critical",
+              ).length;
+              const normalPercentage =
+                readingsList.length > 0
+                  ? Math.round((normalCount / readingsList.length) * 100)
+                  : 0;
+
               // Calculate monthly measurement count (current month)
               const now = new Date();
-              const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-              const monthlyCount = readingsList.filter(r => {
+              const currentMonthStart = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                1,
+              );
+              const monthlyCount = readingsList.filter((r) => {
                 if (!r.date) return false;
-                const readingDate = r.date && typeof (r.date as { toDate?: () => Date }).toDate === "function"
-                  ? (r.date as { toDate: () => Date }).toDate()
-                  : new Date(r.date as unknown as string | number | Date);
+                const readingDate =
+                  r.date &&
+                  typeof (r.date as { toDate?: () => Date }).toDate ===
+                    "function"
+                    ? (r.date as { toDate: () => Date }).toDate()
+                    : new Date(r.date as unknown as string | number | Date);
                 return readingDate >= currentMonthStart;
               }).length;
-              
+
               // Calculate total readings count
               const totalReadingsCount = readingsList.length;
-              
+
               // HbA1c calculation (estimated from average glucose: HbA1c = (avgGlucose + 46.7) / 28.7)
               // This is an approximation - real HbA1c should come from lab results
-              const estimatedHbA1c = avg > 0 ? ((avg + 46.7) / 28.7).toFixed(1) : null;
-              
+              const estimatedHbA1c =
+                avg > 0 ? ((avg + 46.7) / 28.7).toFixed(1) : null;
+
               return (
                 <div className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -698,7 +912,8 @@ export function PatientDetailView() {
                       <CardContent>
                         <div className="text-2xl font-bold">{avg} mg/dL</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Sur {totalReadingsCount} mesure{totalReadingsCount > 1 ? "s" : ""}
+                          Sur {totalReadingsCount} mesure
+                          {totalReadingsCount > 1 ? "s" : ""}
                         </p>
                       </CardContent>
                     </Card>
@@ -735,14 +950,17 @@ export function PatientDetailView() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">{normalPercentage}%</div>
+                        <div className="text-2xl font-bold">
+                          {normalPercentage}%
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {normalCount} normale{normalCount > 1 ? "s" : ""} / {totalReadingsCount} total
+                          {normalCount} normale{normalCount > 1 ? "s" : ""} /{" "}
+                          {totalReadingsCount} total
                         </p>
                       </CardContent>
                     </Card>
                   </div>
-                  
+
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Card>
                       <CardHeader className="pb-2">
@@ -753,7 +971,10 @@ export function PatientDetailView() {
                       <CardContent>
                         <div className="text-2xl font-bold">{monthlyCount}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {now.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+                          {now.toLocaleDateString("fr-FR", {
+                            month: "long",
+                            year: "numeric",
+                          })}
                         </p>
                       </CardContent>
                     </Card>
@@ -764,7 +985,9 @@ export function PatientDetailView() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">{totalReadingsCount}</div>
+                        <div className="text-2xl font-bold">
+                          {totalReadingsCount}
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           Depuis le début
                         </p>
@@ -778,7 +1001,9 @@ export function PatientDetailView() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="text-2xl font-bold">{estimatedHbA1c}%</div>
+                          <div className="text-2xl font-bold">
+                            {estimatedHbA1c}%
+                          </div>
                           <p className="text-xs text-muted-foreground mt-1">
                             Estimation basée sur la moyenne
                           </p>
@@ -799,17 +1024,21 @@ export function PatientDetailView() {
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-warning">Avertissement:</span>
-                            <span className="font-semibold">{warningCount}</span>
+                            <span className="font-semibold">
+                              {warningCount}
+                            </span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-destructive">Critiques:</span>
-                            <span className="font-semibold">{criticalCount}</span>
+                            <span className="font-semibold">
+                              {criticalCount}
+                            </span>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
                   </div>
-                  
+
                   <Card>
                     <CardHeader>
                       <CardTitle>Évolution mensuelle</CardTitle>
@@ -844,29 +1073,53 @@ export function PatientDetailView() {
                 {medications && medications.length > 0 ? (
                   <div className="space-y-4">
                     {medications.map((med) => {
-                      const doctor = med.prescribedById ? usersMap.get(med.prescribedById) : undefined;
-                      const doctorName = doctor ? `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim() : med.prescribedByName || "Médecin inconnu";
+                      const doctor = med.prescribedById
+                        ? usersMap.get(med.prescribedById)
+                        : undefined;
+                      const doctorName = doctor
+                        ? `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim()
+                        : med.prescribedByName || "Médecin inconnu";
                       return (
-                        <div key={med.id} className="border rounded-lg p-4 space-y-2 relative group">
+                        <div
+                          key={med.id}
+                          className="border rounded-lg p-4 space-y-2 relative group"
+                        >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-semibold">{med.medicationName}</h4>
+                                <h4 className="font-semibold">
+                                  {med.medicationName}
+                                </h4>
                                 {med.isActive && (
-                                  <Badge variant="secondary" className="text-xs">Actif</Badge>
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    Actif
+                                  </Badge>
                                 )}
                               </div>
                               <p className="text-sm text-muted-foreground">
                                 {med.dosage} · {med.frequency}
                               </p>
                               <p className="text-sm text-muted-foreground mt-1">
-                                Du {formatDate(med.startDate.toDate().toISOString().split("T")[0])}
-                                {med.endDate ? ` au ${formatDate(med.endDate.toDate().toISOString().split("T")[0])}` : " (en cours)"}
+                                Du{" "}
+                                {formatDate(
+                                  med.startDate
+                                    .toDate()
+                                    .toISOString()
+                                    .split("T")[0],
+                                )}
+                                {med.endDate
+                                  ? ` au ${formatDate(med.endDate.toDate().toISOString().split("T")[0])}`
+                                  : " (en cours)"}
                               </p>
                               {med.notes && (
                                 <p className="text-sm mt-2">{med.notes}</p>
                               )}
-                              <p className="text-xs text-muted-foreground mt-2">Prescrit par {doctorName}</p>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Prescrit par {doctorName}
+                              </p>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Button
@@ -904,15 +1157,19 @@ export function PatientDetailView() {
               </CardContent>
             </Card>
             <MedicationForm
-              medication={editingMedication ? {
-                id: editingMedication.id,
-                medicationName: editingMedication.medicationName,
-                dosage: editingMedication.dosage,
-                frequency: editingMedication.frequency,
-                startDate: editingMedication.startDate,
-                endDate: editingMedication.endDate,
-                notes: editingMedication.notes,
-              } : undefined}
+              medication={
+                editingMedication
+                  ? {
+                      id: editingMedication.id,
+                      medicationName: editingMedication.medicationName,
+                      dosage: editingMedication.dosage,
+                      frequency: editingMedication.frequency,
+                      startDate: editingMedication.startDate,
+                      endDate: editingMedication.endDate,
+                      notes: editingMedication.notes,
+                    }
+                  : undefined
+              }
               isOpen={medicationFormOpen}
               onClose={() => {
                 setMedicationFormOpen(false);
@@ -943,20 +1200,33 @@ export function PatientDetailView() {
                 <div className="space-y-4">
                   {medicalNotes && medicalNotes.length > 0 ? (
                     medicalNotes.map((note) => {
-                      const doctor = note.doctorId ? usersMap.get(note.doctorId) : undefined;
-                      const doctorName = doctor ? `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim() : note.doctorName || "Médecin inconnu";
+                      const doctor = note.doctorId
+                        ? usersMap.get(note.doctorId)
+                        : undefined;
+                      const doctorName = doctor
+                        ? `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim()
+                        : note.doctorName || "Médecin inconnu";
                       return (
-                        <div key={note.id} className="border-l-4 border-primary pl-4 py-2 relative group">
+                        <div
+                          key={note.id}
+                          className="border-l-4 border-primary pl-4 py-2 relative group"
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline">{noteTypeLabels[note.noteType]}</Badge>
+                              <Badge variant="outline">
+                                {noteTypeLabels[note.noteType]}
+                              </Badge>
                               {note.isImportant && (
-                                <Badge variant="secondary" className="text-xs">Important</Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  Important
+                                </Badge>
                               )}
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-muted-foreground">
-                                {formatDateTime(note.createdAt?.toDate().toISOString() || "")}
+                                {formatDateTime(
+                                  note.createdAt?.toDate().toISOString() || "",
+                                )}
                               </span>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button
@@ -982,7 +1252,9 @@ export function PatientDetailView() {
                             </div>
                           </div>
                           <p className="font-medium mb-1">{note.content}</p>
-                          <p className="text-sm text-muted-foreground">Par {doctorName}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Par {doctorName}
+                          </p>
                         </div>
                       );
                     })
@@ -997,13 +1269,17 @@ export function PatientDetailView() {
               </CardContent>
             </Card>
             <MedicalNoteForm
-              note={editingNote ? {
-                id: editingNote.id,
-                noteType: editingNote.noteType,
-                content: editingNote.content,
-                isImportant: editingNote.isImportant,
-                tags: editingNote.tags,
-              } : undefined}
+              note={
+                editingNote
+                  ? {
+                      id: editingNote.id,
+                      noteType: editingNote.noteType,
+                      content: editingNote.content,
+                      isImportant: editingNote.isImportant,
+                      tags: editingNote.tags,
+                    }
+                  : undefined
+              }
               isOpen={medicalNoteFormOpen}
               onClose={() => {
                 setMedicalNoteFormOpen(false);
@@ -1022,7 +1298,11 @@ export function PatientDetailView() {
                 <div className="flex items-center gap-4">
                   <UserCircle className="h-12 w-12 text-muted-foreground" />
                   <div>
-                    <p className="font-medium text-lg">{nurseName ? `${nurseName.firstName || ""} ${nurseName.lastName || ""}`.trim() : "Non assignée"}</p>
+                    <p className="font-medium text-lg">
+                      {nurseName
+                        ? `${nurseName.firstName || ""} ${nurseName.lastName || ""}`.trim()
+                        : "Non assignée"}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {nurseName
                         ? "Infirmière responsable du suivi de ce patient"
@@ -1047,7 +1327,9 @@ export function PatientDetailView() {
               onDocumentsChange={() => {
                 // Reload documents
                 if (id) {
-                  getPatientDocuments(id).then(setDocuments).catch(console.error);
+                  getPatientDocuments(id)
+                    .then(setDocuments)
+                    .catch(console.error);
                 }
               }}
             />
@@ -1056,7 +1338,9 @@ export function PatientDetailView() {
           <TabsContent value="audit" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Historique des modifications (Audit Trail)</CardTitle>
+                <CardTitle>
+                  Historique des modifications (Audit Trail)
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <DataTable
@@ -1067,13 +1351,27 @@ export function PatientDetailView() {
                     { header: "Détails", accessor: "details" },
                   ]}
                   data={(auditLogs || []).map((log) => {
-                    const user = log.userId ? usersMap.get(log.userId) : undefined;
-                    const userName = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : log.userName || "Utilisateur inconnu";
+                    const user = log.userId
+                      ? usersMap.get(log.userId)
+                      : undefined;
+                    const userName = user
+                      ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                      : log.userName || "Utilisateur inconnu";
                     return {
-                      date: formatDateTime(log.createdAt?.toDate().toISOString() || ""),
+                      date: formatDateTime(
+                        log.createdAt?.toDate().toISOString() || "",
+                      ),
                       user: userName,
-                      action: log.action === "create" ? "Création" : log.action === "update" ? "Modification" : log.action === "delete" ? "Suppression" : log.action,
-                      details: log.entityName || `${log.action} ${log.entityType}`,
+                      action:
+                        log.action === "create"
+                          ? "Création"
+                          : log.action === "update"
+                            ? "Modification"
+                            : log.action === "delete"
+                              ? "Suppression"
+                              : log.action,
+                      details:
+                        log.entityName || `${log.action} ${log.entityType}`,
                     };
                   })}
                 />
@@ -1102,7 +1400,9 @@ function PatientDocumentsSection({
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [category, setCategory] = useState<"lab_result" | "prescription" | "report" | "other">("other");
+  const [category, setCategory] = useState<
+    "lab_result" | "prescription" | "report" | "other"
+  >("other");
   const [description, setDescription] = useState("");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1126,7 +1426,7 @@ function PatientDocumentsSection({
       // TODO: Upload file to Firebase Storage first, then create document record
       // For now, we'll create a placeholder URL
       const fileUrl = URL.createObjectURL(file);
-      
+
       await createPatientDocument(
         patientId,
         {
@@ -1137,7 +1437,7 @@ function PatientDocumentsSection({
           category,
           description: description || undefined,
         },
-        currentUser.id
+        currentUser.id,
       );
 
       addNotification({
@@ -1185,7 +1485,8 @@ function PatientDocumentsSection({
           <div>
             <CardTitle>Documents</CardTitle>
             <CardDescription>
-              Gérez les documents du patient (résultats de laboratoire, ordonnances, rapports)
+              Gérez les documents du patient (résultats de laboratoire,
+              ordonnances, rapports)
             </CardDescription>
           </div>
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
@@ -1219,12 +1520,17 @@ function PatientDocumentsSection({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="category">Catégorie</Label>
-                  <Select value={category} onValueChange={(value: any) => setCategory(value)}>
+                  <Select
+                    value={category}
+                    onValueChange={(value: any) => setCategory(value)}
+                  >
                     <SelectTrigger id="category">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="lab_result">Résultat de laboratoire</SelectItem>
+                      <SelectItem value="lab_result">
+                        Résultat de laboratoire
+                      </SelectItem>
                       <SelectItem value="prescription">Ordonnance</SelectItem>
                       <SelectItem value="report">Rapport</SelectItem>
                       <SelectItem value="other">Autre</SelectItem>
@@ -1241,7 +1547,10 @@ function PatientDocumentsSection({
                   />
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setUploadDialogOpen(false)}
+                  >
                     Annuler
                   </Button>
                   <Button onClick={handleUpload} disabled={!file || uploading}>
@@ -1278,9 +1587,16 @@ function PatientDocumentsSection({
             ]}
             data={documents.map((doc) => ({
               file_name: doc.fileName || "Document",
-              category: (categoryLabels as Record<string, string>)[doc.category || "other"] || "Autre",
-              size: doc.fileSize ? `${(doc.fileSize / 1024).toFixed(2)} KB` : "N/A",
-              date: doc.createdAt ? formatDate(doc.createdAt.toDate().toISOString()) : "N/A",
+              category:
+                (categoryLabels as Record<string, string>)[
+                  doc.category || "other"
+                ] || "Autre",
+              size: doc.fileSize
+                ? `${(doc.fileSize / 1024).toFixed(2)} KB`
+                : "N/A",
+              date: doc.createdAt
+                ? formatDate(doc.createdAt.toDate().toISOString())
+                : "N/A",
               actions: (
                 <div className="flex items-center gap-2">
                   <Button

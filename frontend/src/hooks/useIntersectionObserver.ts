@@ -8,9 +8,14 @@ interface UseIntersectionObserverOptions {
 }
 
 export function useIntersectionObserver(
-  options: UseIntersectionObserverOptions = {}
+  options: UseIntersectionObserverOptions = {},
 ): [React.RefObject<HTMLElement | null>, boolean] {
-  const { threshold = 0.1, root = null, rootMargin = "0px", triggerOnce = false } = options;
+  const {
+    threshold = 0.1,
+    root = null,
+    rootMargin = "0px",
+    triggerOnce = false,
+  } = options;
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [hasTriggered, setHasTriggered] = useState(false);
   const elementRef = useRef<HTMLElement | null>(null);
@@ -30,7 +35,7 @@ export function useIntersectionObserver(
           setIsIntersecting(false);
         }
       },
-      { threshold, root, rootMargin }
+      { threshold, root, rootMargin },
     );
 
     observer.observe(element);

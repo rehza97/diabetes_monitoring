@@ -1,10 +1,19 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  type User as FirebaseUser,
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { User } from "@/types";
-import type { FirestoreUser, CreateFirestoreUserDto, UserRole } from "@/types/firestore";
+import type {
+  FirestoreUser,
+  CreateFirestoreUserDto,
+  UserRole,
+} from "@/types/firestore";
 import { createUser } from "@/lib/firestore-helpers";
 import { STORAGE_KEYS } from "@/utils/constants";
 
@@ -49,60 +58,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up Firebase Auth state listener
     const unsubscribe = onAuthStateChanged(auth, async (firebaseAuthUser) => {
       setIsLoading(true);
-      
+
       if (firebaseAuthUser) {
         // User is authenticated with Firebase Auth
         setFirebaseUser(firebaseAuthUser);
-        
+
         try {
           // Fetch user document from Firestore
           const userDocRef = doc(db, "users", firebaseAuthUser.uid);
           const userDocSnap = await getDoc(userDocRef);
-          
+
           if (userDocSnap.exists()) {
             const firestoreUserData = {
               id: userDocSnap.id,
               ...userDocSnap.data(),
             } as FirestoreUser;
-            
+
             // Map FirestoreUser to User type
             const mappedUser = mapFirestoreUserToUser(firestoreUserData);
             setUser(mappedUser);
-            
+
             // Store in localStorage for backward compatibility
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(mappedUser));
           } else {
             // Firebase Auth user exists but no Firestore document - auto-create it
             try {
-              console.log("User document not found. Auto-creating user document for uid:", firebaseAuthUser.uid);
-              
+              console.log(
+                "User document not found. Auto-creating user document for uid:",
+                firebaseAuthUser.uid,
+              );
+
               // Get ID token to check for custom claims (role)
               const idTokenResult = await firebaseAuthUser.getIdTokenResult();
-              const roleFromClaims = idTokenResult.claims.role as string | undefined;
-              
+              const roleFromClaims = idTokenResult.claims.role as
+                | string
+                | undefined;
+
               // Determine role: use custom claim if available, otherwise default to 'nurse'
-              const role: UserRole = (roleFromClaims && ['admin', 'doctor', 'nurse'].includes(roleFromClaims))
-                ? (roleFromClaims as UserRole)
-                : 'nurse';
-              
+              const role: UserRole =
+                roleFromClaims &&
+                ["admin", "doctor", "nurse"].includes(roleFromClaims)
+                  ? (roleFromClaims as UserRole)
+                  : "nurse";
+
               // Extract name from displayName if available, otherwise use defaults
-              const displayName = firebaseAuthUser.displayName || '';
+              const displayName = firebaseAuthUser.displayName || "";
               const nameParts = displayName.trim().split(/\s+/);
-              const firstName = nameParts[0] || 'User';
-              const lastName = nameParts.slice(1).join(' ') || '';
-              
+              const firstName = nameParts[0] || "User";
+              const lastName = nameParts.slice(1).join(" ") || "";
+
               // Create user document with minimal required fields
               const defaultUserData: CreateFirestoreUserDto = {
-                email: firebaseAuthUser.email || '',
+                email: firebaseAuthUser.email || "",
                 firstName: firstName,
                 lastName: lastName,
                 role: role,
                 isActive: true,
               };
-              
+
               await createUser(firebaseAuthUser.uid, defaultUserData);
               console.log("✓ User document created successfully");
-              
+
               // Fetch the newly created document
               const newUserDocSnap = await getDoc(userDocRef);
               if (newUserDocSnap.exists()) {
@@ -110,13 +126,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   id: newUserDocSnap.id,
                   ...newUserDocSnap.data(),
                 } as FirestoreUser;
-                
+
                 // Map FirestoreUser to User type
                 const mappedUser = mapFirestoreUserToUser(firestoreUserData);
                 setUser(mappedUser);
-                
+
                 // Store in localStorage for backward compatibility
-                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(mappedUser));
+                localStorage.setItem(
+                  STORAGE_KEYS.USER,
+                  JSON.stringify(mappedUser),
+                );
               } else {
                 throw new Error("Failed to fetch newly created user document");
               }
@@ -125,14 +144,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               console.error("Error auto-creating user document:", createError);
               console.error("Error code:", createError?.code);
               console.error("Error message:", createError?.message);
-              
+
               if (createError?.code === "permission-denied") {
-                console.error("Permission denied: Unable to create user document. This may indicate a problem with Firestore security rules.");
-                console.error("Please ensure the Firestore rules allow users to create their own document.");
+                console.error(
+                  "Permission denied: Unable to create user document. This may indicate a problem with Firestore security rules.",
+                );
+                console.error(
+                  "Please ensure the Firestore rules allow users to create their own document.",
+                );
               } else {
-                console.error("Unexpected error while creating user document. The user may need to contact an administrator.");
+                console.error(
+                  "Unexpected error while creating user document. The user may need to contact an administrator.",
+                );
               }
-              
+
               // Don't sign out - keep user authenticated but without user data
               // This allows them to see an error message in the UI
               setUser(null);
@@ -142,18 +167,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error: any) {
           // Distinguish between different types of errors
           if (error?.code === "permission-denied") {
-            console.error("Permission denied: User document exists but cannot be read due to security rules.");
-            console.error("This may indicate a problem with Firestore security rules.");
+            console.error(
+              "Permission denied: User document exists but cannot be read due to security rules.",
+            );
+            console.error(
+              "This may indicate a problem with Firestore security rules.",
+            );
             console.error("Error details:", error);
           } else if (error?.code === "not-found") {
-            console.error("User document not found in Firestore for uid:", firebaseAuthUser.uid);
-            console.error("The user account exists in Firebase Auth but has no corresponding Firestore document.");
+            console.error(
+              "User document not found in Firestore for uid:",
+              firebaseAuthUser.uid,
+            );
+            console.error(
+              "The user account exists in Firebase Auth but has no corresponding Firestore document.",
+            );
           } else {
-            console.error("Error fetching user document from Firestore:", error);
+            console.error(
+              "Error fetching user document from Firestore:",
+              error,
+            );
             console.error("Error code:", error?.code);
             console.error("Error message:", error?.message);
           }
-          
+
           setUser(null);
           setFirebaseUser(null);
           // Sign out on error
@@ -166,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(STORAGE_KEYS.USER);
         localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
       }
-      
+
       setIsLoading(false);
     });
 
@@ -183,7 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       // Map Firebase Auth errors to user-friendly messages
       let errorMessage = "Erreur de connexion. Veuillez réessayer.";
-      
+
       if (error.code === "auth/invalid-email") {
         errorMessage = "L'adresse email n'est pas valide.";
       } else if (error.code === "auth/user-disabled") {
@@ -195,11 +232,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (error.code === "auth/invalid-credential") {
         errorMessage = "Email ou mot de passe incorrect.";
       } else if (error.code === "auth/network-request-failed") {
-        errorMessage = "Erreur de connexion réseau. Vérifiez votre connexion internet.";
+        errorMessage =
+          "Erreur de connexion réseau. Vérifiez votre connexion internet.";
       } else if (error.code === "auth/too-many-requests") {
-        errorMessage = "Trop de tentatives de connexion. Veuillez réessayer plus tard.";
+        errorMessage =
+          "Trop de tentatives de connexion. Veuillez réessayer plus tard.";
       }
-      
+
       throw new Error(errorMessage);
     }
   };

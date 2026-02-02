@@ -52,7 +52,11 @@ export interface FirestoreUserPreferences {
 
 // Patient Types
 export type DiabetesType = "type1" | "type2" | "gestational";
-export type PatientStatus = "active" | "inactive" | "critical" | "needs_followup";
+export type PatientStatus =
+  | "active"
+  | "inactive"
+  | "critical"
+  | "needs_followup";
 
 export interface PatientAddress {
   street?: string;
@@ -102,22 +106,22 @@ export interface FirestorePatient {
   avatar?: string;
   isActive: boolean;
   status: PatientStatus;
-  
+
   // Medical Information
   chronicDiseases?: string[];
   allergies?: PatientAllergies;
   emergencyContact?: EmergencyContact;
-  
+
   // Denormalized for quick access
   lastReadingDate?: Timestamp;
   lastReadingValue?: number;
   lastReadingStatus?: "normal" | "warning" | "critical";
   totalReadingsCount?: number;
   averageReadingValue?: number;
-  
+
   // Custom alert rules
   customAlertRules?: CustomAlertRules;
-  
+
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -146,7 +150,11 @@ export interface FirestoreReading {
   time: string;
   notes?: string;
   symptoms?: string[]; // dizziness, sweating, tremor, headache, fatigue, extreme_hunger
-  conditionDuringReading?: "normal" | "after_exercise" | "sick" | "long_fasting";
+  conditionDuringReading?:
+    | "normal"
+    | "after_exercise"
+    | "sick"
+    | "long_fasting";
   recordedById: string; // DocumentReference to users
   recordedByName?: string; // denormalized for quick display
   status: ReadingStatus; // computed based on value and thresholds
@@ -158,7 +166,11 @@ export interface FirestoreReading {
 }
 
 // Medical Notes Types
-export type MedicalNoteType = "diagnosis" | "prescription" | "observation" | "followup";
+export type MedicalNoteType =
+  | "diagnosis"
+  | "prescription"
+  | "observation"
+  | "followup";
 
 export interface FirestoreMedicalNote {
   id: string;
@@ -194,7 +206,11 @@ export interface FirestoreMedication {
 }
 
 // Scheduled Reading Types
-export type ScheduledReadingStatus = "pending" | "completed" | "missed" | "cancelled";
+export type ScheduledReadingStatus =
+  | "pending"
+  | "completed"
+  | "missed"
+  | "cancelled";
 
 export interface FirestoreScheduledReading {
   id: string;
@@ -211,7 +227,11 @@ export interface FirestoreScheduledReading {
 }
 
 // Document Types
-export type DocumentCategory = "lab_result" | "prescription" | "report" | "other";
+export type DocumentCategory =
+  | "lab_result"
+  | "prescription"
+  | "report"
+  | "other";
 
 export interface FirestorePatientDocument {
   id: string;
@@ -226,7 +246,12 @@ export interface FirestorePatientDocument {
 }
 
 // Notification Types
-export type NotificationType = "critical_reading" | "reminder" | "message" | "system" | "assignment";
+export type NotificationType =
+  | "critical_reading"
+  | "reminder"
+  | "message"
+  | "system"
+  | "assignment";
 export type NotificationPriority = "low" | "medium" | "high" | "urgent";
 
 export interface FirestoreNotification {
@@ -260,7 +285,11 @@ export interface FirestoreUserSession {
 }
 
 // Report Types
-export type ReportType = "patient_summary" | "period_summary" | "comparison" | "custom";
+export type ReportType =
+  | "patient_summary"
+  | "period_summary"
+  | "comparison"
+  | "custom";
 
 export interface ReportFilter {
   patientIds?: string[];
@@ -304,8 +333,22 @@ export interface FirestoreReportExport {
 }
 
 // Audit Log Types
-export type AuditAction = "create" | "update" | "delete" | "view" | "export" | "login" | "logout";
-export type AuditEntityType = "patient" | "reading" | "user" | "medication" | "note" | "report" | "settings";
+export type AuditAction =
+  | "create"
+  | "update"
+  | "delete"
+  | "view"
+  | "export"
+  | "login"
+  | "logout";
+export type AuditEntityType =
+  | "patient"
+  | "reading"
+  | "user"
+  | "medication"
+  | "note"
+  | "report"
+  | "settings";
 
 export interface FirestoreAuditLog {
   id: string;
@@ -328,7 +371,14 @@ export interface FirestoreAuditLog {
 }
 
 // Settings Types
-export type SettingCategory = "general" | "measurements" | "notifications" | "security" | "backup" | "email" | "alerts";
+export type SettingCategory =
+  | "general"
+  | "measurements"
+  | "notifications"
+  | "security"
+  | "backup"
+  | "email"
+  | "alerts";
 
 export interface FirestoreSetting {
   id: string;
@@ -359,7 +409,12 @@ export interface FirestoreMessage {
 }
 
 // System Health Types
-export type SystemHealthMetric = "api_response_time" | "database_query_time" | "storage_usage" | "active_users" | "error_rate";
+export type SystemHealthMetric =
+  | "api_response_time"
+  | "database_query_time"
+  | "storage_usage"
+  | "active_users"
+  | "error_rate";
 
 export interface FirestoreSystemHealth {
   id: string;
@@ -434,7 +489,11 @@ export interface CreateFirestoreReadingDto {
   time: string;
   notes?: string;
   symptoms?: string[];
-  conditionDuringReading?: "normal" | "after_exercise" | "sick" | "long_fasting";
+  conditionDuringReading?:
+    | "normal"
+    | "after_exercise"
+    | "sick"
+    | "long_fasting";
 }
 
 export interface CreateFirestoreMedicalNoteDto {
@@ -527,7 +586,12 @@ export interface FirestoreStatisticsCache {
 }
 
 // Patient Alert Types
-export type PatientAlertType = "critical_reading" | "threshold_breach" | "missed_reading" | "medication_due" | "followup_required";
+export type PatientAlertType =
+  | "critical_reading"
+  | "threshold_breach"
+  | "missed_reading"
+  | "medication_due"
+  | "followup_required";
 export type AlertPriority = "low" | "medium" | "high" | "urgent";
 
 export interface PatientAlertMetadata {

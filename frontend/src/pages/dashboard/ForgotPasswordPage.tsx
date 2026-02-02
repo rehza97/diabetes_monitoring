@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { sendPasswordResetEmail, confirmPasswordReset, getAuth } from "firebase/auth";
+import {
+  sendPasswordResetEmail,
+  confirmPasswordReset,
+  getAuth,
+} from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Stethoscope, ArrowLeft, Mail, Lock } from "lucide-react";
@@ -18,7 +28,9 @@ const emailSchema = z.object({
 
 const resetPasswordSchema = z
   .object({
-    password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    password: z
+      .string()
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -84,14 +96,17 @@ export function ForgotPasswordPage() {
     setErrors({});
 
     try {
-      const validatedData = resetPasswordSchema.parse({ password, confirmPassword });
+      const validatedData = resetPasswordSchema.parse({
+        password,
+        confirmPassword,
+      });
       setIsLoading(true);
 
       // Reset password with token via Firebase Auth
       if (!token) {
         throw new Error("Token de réinitialisation manquant");
       }
-      
+
       await confirmPasswordReset(auth, token, validatedData.password);
 
       addNotification({
@@ -129,7 +144,9 @@ export function ForgotPasswordPage() {
                 <Lock className="h-8 w-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-2xl">Réinitialiser le mot de passe</CardTitle>
+            <CardTitle className="text-2xl">
+              Réinitialiser le mot de passe
+            </CardTitle>
             <CardDescription>
               Entrez votre nouveau mot de passe ci-dessous
             </CardDescription>
@@ -154,7 +171,9 @@ export function ForgotPasswordPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <Label htmlFor="confirmPassword">
+                  Confirmer le mot de passe
+                </Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -164,7 +183,9 @@ export function ForgotPasswordPage() {
                   className={errors.confirmPassword ? "border-destructive" : ""}
                 />
                 {errors.confirmPassword && (
-                  <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.confirmPassword}
+                  </p>
                 )}
               </div>
 
@@ -222,10 +243,12 @@ export function ForgotPasswordPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Un email de réinitialisation a été envoyé à <strong>{email}</strong>
+                  Un email de réinitialisation a été envoyé à{" "}
+                  <strong>{email}</strong>
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Cliquez sur le lien dans l'email pour réinitialiser votre mot de passe.
+                  Cliquez sur le lien dans l'email pour réinitialiser votre mot
+                  de passe.
                 </p>
               </div>
               <div className="space-y-2">

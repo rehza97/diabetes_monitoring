@@ -1,5 +1,9 @@
 import jsPDF from "jspdf";
-import type { FirestorePatient, FirestoreReading, FirestoreUser } from "@/types/firestore";
+import type {
+  FirestorePatient,
+  FirestoreReading,
+  FirestoreUser,
+} from "@/types/firestore";
 
 interface PDFReportOptions {
   title: string;
@@ -14,7 +18,7 @@ interface PDFReportOptions {
 export async function exportPatientReportToPDF(
   patient: FirestorePatient,
   readings: FirestoreReading[],
-  options: PDFReportOptions = { title: "Rapport Patient" }
+  options: PDFReportOptions = { title: "Rapport Patient" },
 ): Promise<void> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -30,7 +34,9 @@ export async function exportPatientReportToPDF(
 
   // Title
   doc.setFontSize(14);
-  doc.text(options.title ?? "Rapport", pageWidth / 2, yPos, { align: "center" });
+  doc.text(options.title ?? "Rapport", pageWidth / 2, yPos, {
+    align: "center",
+  });
   yPos += 15;
 
   // Patient Information
@@ -106,12 +112,9 @@ export async function exportPatientReportToPDF(
   // Footer
   if (options.footer) {
     doc.setFontSize(8);
-    doc.text(
-      options.footer,
-      pageWidth / 2,
-      pageHeight - 10,
-      { align: "center" }
-    );
+    doc.text(options.footer, pageWidth / 2, pageHeight - 10, {
+      align: "center",
+    });
   }
 
   // Generate filename
@@ -124,7 +127,7 @@ export async function exportPatientReportToPDF(
  */
 export async function exportReadingsReportToPDF(
   readings: Array<FirestoreReading & { patientName?: string }>,
-  options: PDFReportOptions = { title: "Rapport des Mesures" }
+  options: PDFReportOptions = { title: "Rapport des Mesures" },
 ): Promise<void> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -140,7 +143,9 @@ export async function exportReadingsReportToPDF(
 
   // Title
   doc.setFontSize(14);
-  doc.text(options.title ?? "Rapport", pageWidth / 2, yPos, { align: "center" });
+  doc.text(options.title ?? "Rapport", pageWidth / 2, yPos, {
+    align: "center",
+  });
   yPos += 15;
 
   // Table header
@@ -179,12 +184,9 @@ export async function exportReadingsReportToPDF(
   // Footer
   if (options.footer) {
     doc.setFontSize(8);
-    doc.text(
-      options.footer,
-      pageWidth / 2,
-      pageHeight - 10,
-      { align: "center" }
-    );
+    doc.text(options.footer, pageWidth / 2, pageHeight - 10, {
+      align: "center",
+    });
   }
 
   const filename = `rapport_mesures_${new Date().toISOString().split("T")[0]}.pdf`;

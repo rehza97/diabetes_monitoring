@@ -12,15 +12,27 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 
 // Logging utility
-const logError = (context: string, error: unknown, details?: Record<string, unknown>) => {
+const logError = (
+  context: string,
+  error: unknown,
+  details?: Record<string, unknown>,
+) => {
   console.error(`[DashboardPage] Error in ${context}:`, error, details);
 };
 
-const logWarning = (context: string, message: string, details?: Record<string, unknown>) => {
+const logWarning = (
+  context: string,
+  message: string,
+  details?: Record<string, unknown>,
+) => {
   console.warn(`[DashboardPage] Warning in ${context}:`, message, details);
 };
 
-const logInfo = (context: string, message: string, details?: Record<string, unknown>) => {
+const logInfo = (
+  context: string,
+  message: string,
+  details?: Record<string, unknown>,
+) => {
   console.log(`[DashboardPage] Info in ${context}:`, message, details);
 };
 import {
@@ -40,8 +52,16 @@ import {
 } from "lucide-react";
 import { useUsers, usePatients } from "@/hooks/useFirestore";
 import { useRealtimeAuditLogs } from "@/hooks/useRealtime";
-import { usersCollection, patientsCollection, auditLogsCollection } from "@/lib/firestore-helpers";
-import type { FirestoreUser, FirestorePatient, FirestoreAuditLog } from "@/types/firestore";
+import {
+  usersCollection,
+  patientsCollection,
+  auditLogsCollection,
+} from "@/lib/firestore-helpers";
+import type {
+  FirestoreUser,
+  FirestorePatient,
+  FirestoreAuditLog,
+} from "@/types/firestore";
 import { useNavigate } from "react-router-dom";
 import {
   Tooltip,
@@ -57,7 +77,7 @@ import { useAuth } from "@/context/AuthContext";
 export function DashboardPage() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  
+
   // Component lifecycle logging
   useEffect(() => {
     logInfo("componentMount", "DashboardPage mounted");
@@ -91,7 +111,11 @@ export function DashboardPage() {
 
   const doctorsQuery = useMemo(() => {
     try {
-      const q = query(usersCollection, where("role", "==", "doctor"), where("isActive", "==", true));
+      const q = query(
+        usersCollection,
+        where("role", "==", "doctor"),
+        where("isActive", "==", true),
+      );
       logInfo("doctorsQuery", "Query created successfully");
       return q;
     } catch (error) {
@@ -102,7 +126,11 @@ export function DashboardPage() {
 
   const nursesQuery = useMemo(() => {
     try {
-      const q = query(usersCollection, where("role", "==", "nurse"), where("isActive", "==", true));
+      const q = query(
+        usersCollection,
+        where("role", "==", "nurse"),
+        where("isActive", "==", true),
+      );
       logInfo("nursesQuery", "Query created successfully");
       return q;
     } catch (error) {
@@ -113,7 +141,11 @@ export function DashboardPage() {
 
   const recentAuditLogsQuery = useMemo(() => {
     try {
-      const q = query(auditLogsCollection, orderBy("createdAt", "desc"), limit(5));
+      const q = query(
+        auditLogsCollection,
+        orderBy("createdAt", "desc"),
+        limit(5),
+      );
       logInfo("recentAuditLogsQuery", "Query created successfully");
       return q;
     } catch (error) {
@@ -124,7 +156,12 @@ export function DashboardPage() {
 
   const recentPatientsQuery = useMemo(() => {
     try {
-      const q = query(patientsCollection, where("isActive", "==", true), orderBy("updatedAt", "desc"), limit(5));
+      const q = query(
+        patientsCollection,
+        where("isActive", "==", true),
+        orderBy("updatedAt", "desc"),
+        limit(5),
+      );
       logInfo("recentPatientsQuery", "Query created successfully");
       return q;
     } catch (error) {
@@ -135,7 +172,13 @@ export function DashboardPage() {
 
   const criticalPatientsQuery = useMemo(() => {
     try {
-      const q = query(patientsCollection, where("isActive", "==", true), where("lastReadingStatus", "==", "critical"), orderBy("lastReadingDate", "desc"), limit(5));
+      const q = query(
+        patientsCollection,
+        where("isActive", "==", true),
+        where("lastReadingStatus", "==", "critical"),
+        orderBy("lastReadingDate", "desc"),
+        limit(5),
+      );
       logInfo("criticalPatientsQuery", "Query created successfully");
       return q;
     } catch (error) {
@@ -145,36 +188,94 @@ export function DashboardPage() {
   }, []);
 
   // Only fetch data when authenticated
-  const { data: users, loading: usersLoading, error: usersError } = useUsers(usersQuery, isAuthenticated);
-  const { data: patients, loading: patientsLoading, error: patientsError } = usePatients(patientsQuery, isAuthenticated);
-  const { data: doctors, loading: doctorsLoading } = useUsers(doctorsQuery, isAuthenticated);
-  const { data: nurses, loading: nursesLoading } = useUsers(nursesQuery, isAuthenticated);
-  const { data: auditLogs, loading: auditLogsLoading, error: auditLogsError } = useRealtimeAuditLogs(recentAuditLogsQuery, { enabled: isAuthenticated });
-  const { data: recentPatients, loading: recentPatientsLoading } = usePatients(recentPatientsQuery, isAuthenticated);
-  const { data: criticalPatients, loading: criticalPatientsLoading } = usePatients(criticalPatientsQuery, isAuthenticated);
+  const {
+    data: users,
+    loading: usersLoading,
+    error: usersError,
+  } = useUsers(usersQuery, isAuthenticated);
+  const {
+    data: patients,
+    loading: patientsLoading,
+    error: patientsError,
+  } = usePatients(patientsQuery, isAuthenticated);
+  const { data: doctors, loading: doctorsLoading } = useUsers(
+    doctorsQuery,
+    isAuthenticated,
+  );
+  const { data: nurses, loading: nursesLoading } = useUsers(
+    nursesQuery,
+    isAuthenticated,
+  );
+  const {
+    data: auditLogs,
+    loading: auditLogsLoading,
+    error: auditLogsError,
+  } = useRealtimeAuditLogs(recentAuditLogsQuery, { enabled: isAuthenticated });
+  const { data: recentPatients, loading: recentPatientsLoading } = usePatients(
+    recentPatientsQuery,
+    isAuthenticated,
+  );
+  const { data: criticalPatients, loading: criticalPatientsLoading } =
+    usePatients(criticalPatientsQuery, isAuthenticated);
 
   // Log data fetching status
   useEffect(() => {
     logInfo("dataFetching", "Data fetching status", {
-      users: { loading: usersLoading, count: users?.length ?? 0, error: usersError?.message },
-      patients: { loading: patientsLoading, count: patients?.length ?? 0, error: patientsError?.message },
+      users: {
+        loading: usersLoading,
+        count: users?.length ?? 0,
+        error: usersError?.message,
+      },
+      patients: {
+        loading: patientsLoading,
+        count: patients?.length ?? 0,
+        error: patientsError?.message,
+      },
       doctors: { loading: doctorsLoading, count: doctors?.length ?? 0 },
       nurses: { loading: nursesLoading, count: nurses?.length ?? 0 },
-      auditLogs: { loading: auditLogsLoading, count: auditLogs?.length ?? 0, error: auditLogsError?.message },
-      recentPatients: { loading: recentPatientsLoading, count: recentPatients?.length ?? 0 },
-      criticalPatients: { loading: criticalPatientsLoading, count: criticalPatients?.length ?? 0 },
+      auditLogs: {
+        loading: auditLogsLoading,
+        count: auditLogs?.length ?? 0,
+        error: auditLogsError?.message,
+      },
+      recentPatients: {
+        loading: recentPatientsLoading,
+        count: recentPatients?.length ?? 0,
+      },
+      criticalPatients: {
+        loading: criticalPatientsLoading,
+        count: criticalPatients?.length ?? 0,
+      },
     });
-  }, [usersLoading, patientsLoading, doctorsLoading, nursesLoading, auditLogsLoading, recentPatientsLoading, criticalPatientsLoading, users?.length, patients?.length, doctors?.length, nurses?.length, auditLogs?.length, recentPatients?.length, criticalPatients?.length, usersError, patientsError, auditLogsError]);
+  }, [
+    usersLoading,
+    patientsLoading,
+    doctorsLoading,
+    nursesLoading,
+    auditLogsLoading,
+    recentPatientsLoading,
+    criticalPatientsLoading,
+    users?.length,
+    patients?.length,
+    doctors?.length,
+    nurses?.length,
+    auditLogs?.length,
+    recentPatients?.length,
+    criticalPatients?.length,
+    usersError,
+    patientsError,
+    auditLogsError,
+  ]);
 
   // Log errors when they occur
   useEffect(() => {
     if (usersError) {
-      const errorDetails: Record<string, unknown> = { 
+      const errorDetails: Record<string, unknown> = {
         query: "usersQuery",
         message: usersError.message,
         name: usersError.name,
       };
-      if ('code' in usersError) {
+      if ("code" in usersError) {
         errorDetails.code = (usersError as any).code;
       }
       logError("usersFetch", usersError, errorDetails);
@@ -183,12 +284,12 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (patientsError) {
-      const errorDetails: Record<string, unknown> = { 
+      const errorDetails: Record<string, unknown> = {
         query: "patientsQuery",
         message: patientsError.message,
         name: patientsError.name,
       };
-      if ('code' in patientsError) {
+      if ("code" in patientsError) {
         errorDetails.code = (patientsError as any).code;
       }
       logError("patientsFetch", patientsError, errorDetails);
@@ -197,12 +298,12 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (auditLogsError) {
-      const errorDetails: Record<string, unknown> = { 
+      const errorDetails: Record<string, unknown> = {
         query: "recentAuditLogsQuery",
         message: auditLogsError.message,
         name: auditLogsError.name,
       };
-      if ('code' in auditLogsError) {
+      if ("code" in auditLogsError) {
         errorDetails.code = (auditLogsError as any).code;
       }
       logError("auditLogsFetch", auditLogsError, errorDetails);
@@ -213,44 +314,65 @@ export function DashboardPage() {
   const stats = useMemo(() => {
     try {
       logInfo("statsCalculation", "Starting stats calculation");
-      
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayTimestamp = Timestamp.fromDate(today);
-      
+
       // Count today's readings from audit logs
-      const todayReadings = auditLogs?.filter(log => 
-        log.action === "create" && 
-        log.entityType === "reading" &&
-        log.createdAt &&
-        log.createdAt.toMillis() >= todayTimestamp.toMillis()
-      ).length || 0;
+      const todayReadings =
+        auditLogs?.filter(
+          (log) =>
+            log.action === "create" &&
+            log.entityType === "reading" &&
+            log.createdAt &&
+            log.createdAt.toMillis() >= todayTimestamp.toMillis(),
+        ).length || 0;
 
-    // Count critical patients (patients with critical last reading status)
-    const criticalPatients = patients?.filter(p => p.lastReadingStatus === "critical").length || 0;
+      // Count critical patients (patients with critical last reading status)
+      const criticalPatients =
+        patients?.filter((p) => p.lastReadingStatus === "critical").length || 0;
 
-    // Calculate average readings per day (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const thirtyDaysAgoTimestamp = Timestamp.fromDate(thirtyDaysAgo);
-    const readingsLast30Days = auditLogs?.filter(log =>
-      log.action === "create" &&
-      log.entityType === "reading" &&
-      log.createdAt &&
-      log.createdAt.toMillis() >= thirtyDaysAgoTimestamp.toMillis()
-    ).length || 0;
-    const avgDailyReadings = readingsLast30Days > 0 ? Math.round(readingsLast30Days / 30) : 0;
+      // Calculate average readings per day (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysAgoTimestamp = Timestamp.fromDate(thirtyDaysAgo);
+      const readingsLast30Days =
+        auditLogs?.filter(
+          (log) =>
+            log.action === "create" &&
+            log.entityType === "reading" &&
+            log.createdAt &&
+            log.createdAt.toMillis() >= thirtyDaysAgoTimestamp.toMillis(),
+        ).length || 0;
+      const avgDailyReadings =
+        readingsLast30Days > 0 ? Math.round(readingsLast30Days / 30) : 0;
 
-    // Calculate normal readings percentage (from patients' last reading status)
-    const totalWithReadings = patients?.filter(p => p.lastReadingStatus).length || 0;
-    const normalReadings = patients?.filter(p => p.lastReadingStatus === "normal").length || 0;
-    const normalPercentage = totalWithReadings > 0 ? Math.round((normalReadings / totalWithReadings) * 100) : 0;
+      // Calculate normal readings percentage (from patients' last reading status)
+      const totalWithReadings =
+        patients?.filter((p) => p.lastReadingStatus).length || 0;
+      const normalReadings =
+        patients?.filter((p) => p.lastReadingStatus === "normal").length || 0;
+      const normalPercentage =
+        totalWithReadings > 0
+          ? Math.round((normalReadings / totalWithReadings) * 100)
+          : 0;
 
-    // Calculate average reading value (from patients' last reading value)
-    const patientsWithValues = patients?.filter(p => p.lastReadingValue !== undefined && p.lastReadingValue !== null) || [];
-    const avgValue = patientsWithValues.length > 0
-      ? Math.round(patientsWithValues.reduce((sum, p) => sum + (p.lastReadingValue || 0), 0) / patientsWithValues.length)
-      : 0;
+      // Calculate average reading value (from patients' last reading value)
+      const patientsWithValues =
+        patients?.filter(
+          (p) =>
+            p.lastReadingValue !== undefined && p.lastReadingValue !== null,
+        ) || [];
+      const avgValue =
+        patientsWithValues.length > 0
+          ? Math.round(
+              patientsWithValues.reduce(
+                (sum, p) => sum + (p.lastReadingValue || 0),
+                0,
+              ) / patientsWithValues.length,
+            )
+          : 0;
 
       // Calculate adherence rate - requires scheduled readings data
       // For now, set to 0 until we have scheduled readings data
@@ -299,39 +421,47 @@ export function DashboardPage() {
 
   // Transform audit logs to activities
   const activities = useMemo(() => {
-    return auditLogs?.slice(0, 5).map(log => {
-      const userName = log.userName || "Utilisateur";
-      const userRole = log.userRole || "Utilisateur";
-      
-      let action = "";
-      let type: "report" | "other" | "reading" | "login" | "patient_added" | "notification" = "other";
-      
-      if (log.action === "create" && log.entityType === "reading") {
-        action = "a enregistré une nouvelle mesure";
-        type = "reading";
-      } else if (log.action === "create" && log.entityType === "patient") {
-        action = "a ajouté un nouveau patient";
-        type = "patient_added";
-      } else if (log.action === "create" && log.entityType === "user") {
-        action = "a créé un nouvel utilisateur";
-        type = "other";
-      } else {
-        action = `${log.action} ${log.entityType}`;
-      }
+    return (
+      auditLogs?.slice(0, 5).map((log) => {
+        const userName = log.userName || "Utilisateur";
+        const userRole = log.userRole || "Utilisateur";
 
-      return {
-        id: log.id,
-        type,
-        user: { name: userName, role: userRole },
-        action,
-        timestamp: log.createdAt?.toDate() || new Date(),
-        relatedEntity: {
-          type: log.entityType,
-          id: log.entityId || "",
-          name: log.entityName || "",
-        },
-      };
-    }) || [];
+        let action = "";
+        let type:
+          | "report"
+          | "other"
+          | "reading"
+          | "login"
+          | "patient_added"
+          | "notification" = "other";
+
+        if (log.action === "create" && log.entityType === "reading") {
+          action = "a enregistré une nouvelle mesure";
+          type = "reading";
+        } else if (log.action === "create" && log.entityType === "patient") {
+          action = "a ajouté un nouveau patient";
+          type = "patient_added";
+        } else if (log.action === "create" && log.entityType === "user") {
+          action = "a créé un nouvel utilisateur";
+          type = "other";
+        } else {
+          action = `${log.action} ${log.entityType}`;
+        }
+
+        return {
+          id: log.id,
+          type,
+          user: { name: userName, role: userRole },
+          action,
+          timestamp: log.createdAt?.toDate() || new Date(),
+          relatedEntity: {
+            type: log.entityType,
+            id: log.entityId || "",
+            name: log.entityName || "",
+          },
+        };
+      }) || []
+    );
   }, [auditLogs]);
 
   // Create alerts from critical patients
@@ -361,18 +491,25 @@ export function DashboardPage() {
       date.setDate(date.getDate() - (29 - i));
       date.setHours(0, 0, 0, 0);
       const dayTimestamp = Timestamp.fromDate(date);
-      const nextDayTimestamp = Timestamp.fromDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
-      
-      const dayReadings = auditLogs?.filter(log =>
-        log.action === "create" &&
-        log.entityType === "reading" &&
-        log.createdAt &&
-        log.createdAt.toMillis() >= dayTimestamp.toMillis() &&
-        log.createdAt.toMillis() < nextDayTimestamp.toMillis()
-      ).length || 0;
-      
+      const nextDayTimestamp = Timestamp.fromDate(
+        new Date(date.getTime() + 24 * 60 * 60 * 1000),
+      );
+
+      const dayReadings =
+        auditLogs?.filter(
+          (log) =>
+            log.action === "create" &&
+            log.entityType === "reading" &&
+            log.createdAt &&
+            log.createdAt.toMillis() >= dayTimestamp.toMillis() &&
+            log.createdAt.toMillis() < nextDayTimestamp.toMillis(),
+        ).length || 0;
+
       return {
-        date: date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+        date: date.toLocaleDateString("fr-FR", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
         value: dayReadings,
       };
     });
@@ -387,24 +524,29 @@ export function DashboardPage() {
       const monthEnd = new Date(2024, index + 1, 0);
       const monthStartTimestamp = Timestamp.fromDate(monthStart);
       const monthEndTimestamp = Timestamp.fromDate(monthEnd);
-      
-      const monthReadings = auditLogs?.filter(log =>
-        log.action === "create" &&
-        log.entityType === "reading" &&
-        log.createdAt &&
-        log.createdAt.toMillis() >= monthStartTimestamp.toMillis() &&
-        log.createdAt.toMillis() <= monthEndTimestamp.toMillis()
-      ).length || 0;
-      
+
+      const monthReadings =
+        auditLogs?.filter(
+          (log) =>
+            log.action === "create" &&
+            log.entityType === "reading" &&
+            log.createdAt &&
+            log.createdAt.toMillis() >= monthStartTimestamp.toMillis() &&
+            log.createdAt.toMillis() <= monthEndTimestamp.toMillis(),
+        ).length || 0;
+
       return { name: month, value: monthReadings };
     });
   }, [auditLogs]);
 
   // Pie chart: diabetes type distribution
   const diabetesTypeData = useMemo(() => {
-    const type1 = patients?.filter(p => p.diabetesType === "type1").length || 0;
-    const type2 = patients?.filter(p => p.diabetesType === "type2").length || 0;
-    const gestational = patients?.filter(p => p.diabetesType === "gestational").length || 0;
+    const type1 =
+      patients?.filter((p) => p.diabetesType === "type1").length || 0;
+    const type2 =
+      patients?.filter((p) => p.diabetesType === "type2").length || 0;
+    const gestational =
+      patients?.filter((p) => p.diabetesType === "gestational").length || 0;
     return [
       { name: "Type 1", value: type1 },
       { name: "Type 2", value: type2 },
@@ -414,9 +556,12 @@ export function DashboardPage() {
 
   // Doughnut chart: status distribution
   const statusData = useMemo(() => {
-    const normal = patients?.filter(p => p.lastReadingStatus === "normal").length || 0;
-    const warning = patients?.filter(p => p.lastReadingStatus === "warning").length || 0;
-    const critical = patients?.filter(p => p.lastReadingStatus === "critical").length || 0;
+    const normal =
+      patients?.filter((p) => p.lastReadingStatus === "normal").length || 0;
+    const warning =
+      patients?.filter((p) => p.lastReadingStatus === "warning").length || 0;
+    const critical =
+      patients?.filter((p) => p.lastReadingStatus === "critical").length || 0;
     return [
       { name: "Normal", value: normal },
       { name: "Avertissement", value: warning },
@@ -430,11 +575,14 @@ export function DashboardPage() {
     return months.map((month, index) => {
       const monthEnd = new Date(2024, index + 1, 0);
       const monthEndTimestamp = Timestamp.fromDate(monthEnd);
-      
-      const patientsByMonth = patients?.filter(p =>
-        p.createdAt && p.createdAt.toMillis() <= monthEndTimestamp.toMillis()
-      ).length || 0;
-      
+
+      const patientsByMonth =
+        patients?.filter(
+          (p) =>
+            p.createdAt &&
+            p.createdAt.toMillis() <= monthEndTimestamp.toMillis(),
+        ).length || 0;
+
       return { month, patients: patientsByMonth };
     });
   }, [patients]);
@@ -442,16 +590,17 @@ export function DashboardPage() {
   // Heatmap: readings by hour
   const heatmapData = useMemo(() => {
     const days = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-    
+
     // Calculate readings per day/hour from audit logs
-    const readingLogs = auditLogs?.filter(log => 
-      log.action === "create" && log.entityType === "reading"
-    ) || [];
-    
+    const readingLogs =
+      auditLogs?.filter(
+        (log) => log.action === "create" && log.entityType === "reading",
+      ) || [];
+
     // Create a map to count readings by day and hour
     const readingCounts: Record<string, number> = {};
-    
-    readingLogs.forEach(log => {
+
+    readingLogs.forEach((log) => {
       if (log.createdAt) {
         try {
           const date = log.createdAt.toDate();
@@ -466,24 +615,34 @@ export function DashboardPage() {
         }
       }
     });
-    
+
     return days.flatMap((day, dayIndex) =>
       Array.from({ length: 24 }, (_, hour) => ({
         day,
         hour,
         value: readingCounts[`${dayIndex}-${hour}`] || 0,
-      }))
+      })),
     );
   }, [auditLogs]);
 
-  const loading = authLoading || usersLoading || patientsLoading || doctorsLoading || nursesLoading || auditLogsLoading || recentPatientsLoading || criticalPatientsLoading;
-  const errors = [usersError, patientsError, auditLogsError].filter(Boolean) as Error[];
+  const loading =
+    authLoading ||
+    usersLoading ||
+    patientsLoading ||
+    doctorsLoading ||
+    nursesLoading ||
+    auditLogsLoading ||
+    recentPatientsLoading ||
+    criticalPatientsLoading;
+  const errors = [usersError, patientsError, auditLogsError].filter(
+    Boolean,
+  ) as Error[];
   const error = errors[0];
 
   useEffect(() => {
     if (errors.length > 0) {
       logError("pageRender", "Errors detected during page render", {
-        errors: errors.map(e => ({ message: e.message, stack: e.stack })),
+        errors: errors.map((e) => ({ message: e.message, stack: e.stack })),
       });
     }
   }, [errors]);
@@ -519,14 +678,16 @@ export function DashboardPage() {
   }
 
   if (error) {
-    logError("pageRender", "Rendering error state", { errorMessage: error.message });
+    logError("pageRender", "Rendering error state", {
+      errorMessage: error.message,
+    });
     return (
       <DashboardLayout>
         <div className="space-y-4">
           {errors.map((err, index) => (
-            <ErrorMessage 
+            <ErrorMessage
               key={index}
-              message={`Erreur lors du chargement des données: ${err.message}`} 
+              message={`Erreur lors du chargement des données: ${err.message}`}
             />
           ))}
         </div>
@@ -539,12 +700,14 @@ export function DashboardPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Tableau de bord</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Tableau de bord
+            </h1>
             <p className="text-muted-foreground mt-1">
               Vue d'ensemble de votre système de monitoring du diabète
             </p>
           </div>
-          
+
           {/* Quick Actions */}
           <div className="flex items-center gap-2">
             <Tooltip>
@@ -733,12 +896,36 @@ export function DashboardPage() {
 
         {/* Graphiques */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <ChartCard title="Tendance des mesures" type="line" data={readingsTrendData} />
-          <ChartCard title="Comparaison mensuelle" type="bar" data={monthlyComparisonData} />
-          <ChartCard title="Distribution types diabète" type="pie" data={diabetesTypeData} />
-          <ChartCard title="Distribution états" type="doughnut" data={statusData} />
-          <ChartCard title="Croissance patients" type="area" data={patientGrowthData} />
-          <ChartCard title="Distribution par heure" type="heatmap" data={heatmapData} />
+          <ChartCard
+            title="Tendance des mesures"
+            type="line"
+            data={readingsTrendData}
+          />
+          <ChartCard
+            title="Comparaison mensuelle"
+            type="bar"
+            data={monthlyComparisonData}
+          />
+          <ChartCard
+            title="Distribution types diabète"
+            type="pie"
+            data={diabetesTypeData}
+          />
+          <ChartCard
+            title="Distribution états"
+            type="doughnut"
+            data={statusData}
+          />
+          <ChartCard
+            title="Croissance patients"
+            type="area"
+            data={patientGrowthData}
+          />
+          <ChartCard
+            title="Distribution par heure"
+            type="heatmap"
+            data={heatmapData}
+          />
         </div>
 
         {/* Quick Access Section */}
@@ -763,7 +950,9 @@ export function DashboardPage() {
                     <div
                       key={patient.id}
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => navigate(`/dashboard/patients/${patient.id}`)}
+                      onClick={() =>
+                        navigate(`/dashboard/patients/${patient.id}`)
+                      }
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={patient.avatar} />
@@ -785,16 +974,16 @@ export function DashboardPage() {
                             patient.lastReadingStatus === "critical"
                               ? "destructive"
                               : patient.lastReadingStatus === "warning"
-                              ? "default"
-                              : "secondary"
+                                ? "default"
+                                : "secondary"
                           }
                           className="text-xs"
                         >
                           {patient.lastReadingStatus === "critical"
                             ? "Critique"
                             : patient.lastReadingStatus === "warning"
-                            ? "Avertissement"
-                            : "Normal"}
+                              ? "Avertissement"
+                              : "Normal"}
                         </Badge>
                       )}
                     </div>
@@ -833,7 +1022,9 @@ export function DashboardPage() {
                     <div
                       key={patient.id}
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors border-l-4 border-destructive"
-                      onClick={() => navigate(`/dashboard/patients/${patient.id}`)}
+                      onClick={() =>
+                        navigate(`/dashboard/patients/${patient.id}`)
+                      }
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={patient.avatar} />
@@ -853,7 +1044,9 @@ export function DashboardPage() {
                           )}
                           {patient.lastReadingDate && (
                             <span className="text-xs text-muted-foreground">
-                              {patient.lastReadingDate.toDate().toLocaleDateString("fr-FR")}
+                              {patient.lastReadingDate
+                                .toDate()
+                                .toLocaleDateString("fr-FR")}
                             </span>
                           )}
                         </div>
@@ -864,7 +1057,9 @@ export function DashboardPage() {
                     variant="ghost"
                     size="sm"
                     className="w-full mt-2"
-                    onClick={() => navigate("/dashboard/patients?status=critical")}
+                    onClick={() =>
+                      navigate("/dashboard/patients?status=critical")
+                    }
                   >
                     Voir tous les cas critiques
                   </Button>

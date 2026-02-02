@@ -20,7 +20,10 @@ import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useRealtimeNotifications } from "@/hooks/useRealtime";
 import { auth } from "@/lib/firebase";
-import { updateNotification, deleteNotification } from "@/lib/firestore-helpers";
+import {
+  updateNotification,
+  deleteNotification,
+} from "@/lib/firestore-helpers";
 import { cn } from "@/lib/utils";
 import type { FirestoreNotification } from "@/types/firestore";
 
@@ -48,7 +51,11 @@ export function NotificationsPage() {
   const [filter, setFilter] = useState<string>("all");
   const { addNotification } = useNotification();
 
-  const { data: notifications, loading, error } = useRealtimeNotifications(currentUserId, {
+  const {
+    data: notifications,
+    loading,
+    error,
+  } = useRealtimeNotifications(currentUserId, {
     enabled: !!currentUserId,
   });
 
@@ -77,26 +84,36 @@ export function NotificationsPage() {
   // Transform Firestore notifications to match UI format
   const transformedNotifications = useMemo(() => {
     if (!notifications) return [];
-    
+
     return notifications.map((notif) => {
       // Map Firestore notification type to UI type
       const typeStr = notif.type as string;
       let uiType: "system" | "security" | "error" | "update" = "system";
-      if (typeStr === "security" || typeStr === "critical" || notif.type === "critical_reading") {
+      if (
+        typeStr === "security" ||
+        typeStr === "critical" ||
+        notif.type === "critical_reading"
+      ) {
         uiType = "security";
       } else if (typeStr === "error" || typeStr === "warning") {
         uiType = "error";
-      } else if (typeStr === "update" || typeStr === "info" || notif.type === "reminder" || notif.type === "message") {
+      } else if (
+        typeStr === "update" ||
+        typeStr === "info" ||
+        notif.type === "reminder" ||
+        notif.type === "message"
+      ) {
         uiType = "update";
       }
-      
+
       return {
         id: notif.id,
         type: uiType,
         title: notif.title || "Notification",
         message: notif.message || "",
         is_read: notif.isRead || false,
-        created_at: notif.createdAt?.toDate().toISOString() || new Date().toISOString(),
+        created_at:
+          notif.createdAt?.toDate().toISOString() || new Date().toISOString(),
         firestoreNotification: notif, // Keep reference for updates
       };
     });
@@ -140,7 +157,10 @@ export function NotificationsPage() {
   };
 
   const handleMarkAllAsRead = async () => {
-    log("markAllAsRead", "invoked", { currentUserId, notificationsCount: notifications?.length });
+    log("markAllAsRead", "invoked", {
+      currentUserId,
+      notificationsCount: notifications?.length,
+    });
     if (!currentUserId || !notifications) {
       log("markAllAsRead", "skip: no userId or no notifications");
       return;
@@ -149,7 +169,9 @@ export function NotificationsPage() {
     log("markAllAsRead", "updating", { count: unreadNotifications.length });
     try {
       await Promise.all(
-        unreadNotifications.map((n) => updateNotification(currentUserId, n.id, { isRead: true }))
+        unreadNotifications.map((n) =>
+          updateNotification(currentUserId, n.id, { isRead: true }),
+        ),
       );
       log("markAllAsRead", "ok", { count: unreadNotifications.length });
       addNotification({
@@ -210,15 +232,20 @@ export function NotificationsPage() {
       <DashboardLayout>
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Notifications
+            </h1>
             <p className="text-muted-foreground mt-1">
-              Gérez vos notifications système, alertes sécurité et rapports d'erreurs
+              Gérez vos notifications système, alertes sécurité et rapports
+              d'erreurs
             </p>
           </div>
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <Bell className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-              <p className="text-muted-foreground">Connectez-vous pour voir vos notifications.</p>
+              <p className="text-muted-foreground">
+                Connectez-vous pour voir vos notifications.
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -241,20 +268,28 @@ export function NotificationsPage() {
     log("render", "error", { message: error.message });
     return (
       <DashboardLayout>
-        <ErrorMessage message={`Erreur lors du chargement des notifications: ${error.message}`} />
+        <ErrorMessage
+          message={`Erreur lors du chargement des notifications: ${error.message}`}
+        />
       </DashboardLayout>
     );
   }
 
-  log("render", "success", { filteredCount: filteredNotifications.length, unreadCount });
+  log("render", "success", {
+    filteredCount: filteredNotifications.length,
+    unreadCount,
+  });
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Notifications
+            </h1>
             <p className="text-muted-foreground mt-1">
-              Gérez vos notifications système, alertes sécurité et rapports d'erreurs
+              Gérez vos notifications système, alertes sécurité et rapports
+              d'erreurs
             </p>
           </div>
           <div className="flex gap-2">
@@ -302,25 +337,38 @@ export function NotificationsPage() {
                       key={notification.id}
                       className={cn(
                         "flex items-start justify-between rounded-lg border p-4 transition-colors",
-                        !notification.is_read && "bg-primary/5 border-primary/20"
+                        !notification.is_read &&
+                          "bg-primary/5 border-primary/20",
                       )}
                     >
                       <div className="flex items-start gap-3 flex-1">
-                        <div className={cn("flex h-10 w-10 items-center justify-center rounded-full", colorClass)}>
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 items-center justify-center rounded-full",
+                            colorClass,
+                          )}
+                        >
                           <Icon className="h-5 w-5" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold">{notification.title}</h3>
+                            <h3 className="font-semibold">
+                              {notification.title}
+                            </h3>
                             {!notification.is_read && (
                               <Badge variant="destructive" className="text-xs">
                                 Non lu
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">{notification.message}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {notification.message}
+                          </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {formatDistanceToNow(timestamp, { addSuffix: true, locale: fr })}
+                            {formatDistanceToNow(timestamp, {
+                              addSuffix: true,
+                              locale: fr,
+                            })}
                           </p>
                         </div>
                       </div>

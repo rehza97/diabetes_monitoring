@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Phone, Mail } from "lucide-react";
+import { ArrowRight, Phone, Mail, Smartphone, Download } from "lucide-react";
 import { ContactForm } from "@/components/landing/ContactForm";
+
+/** Direct download URL for the mobile APK (GitHub raw so scan/click triggers download) */
+const APP_APK_DOWNLOAD_URL =
+  "https://raw.githubusercontent.com/rehza97/diabetes_monitoring/main/mobile/release/app-release.apk";
 
 export function CTASection() {
   return (
@@ -12,7 +17,52 @@ export function CTASection() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="container px-6 relative z-10">
+      <div className="container px-6 relative z-10 space-y-16">
+        {/* App download: QR code + direct download button */}
+        <div className="flex flex-col items-center gap-6 text-center">
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-6 w-6" aria-hidden />
+            <h3 className="text-2xl font-semibold">
+              Téléchargez l'application mobile
+            </h3>
+          </div>
+          <p className="text-sm opacity-90 max-w-md">
+            Scannez le QR code avec votre téléphone ou cliquez pour télécharger l'APK directement.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
+            <div className="bg-white rounded-xl p-4 shadow-lg">
+              <QRCodeSVG
+                value={APP_APK_DOWNLOAD_URL}
+                size={160}
+                level="M"
+                includeMargin
+                title="QR code pour télécharger l'application mobile"
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="group"
+                asChild
+              >
+                <a
+                  href={APP_APK_DOWNLOAD_URL}
+                  download="app-release.apk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Télécharger l'APK
+                </a>
+              </Button>
+              <span className="text-xs opacity-80">
+                Android · Téléchargement direct
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
           {/* Left column - Text and CTAs */}
           <div className="text-center lg:text-left space-y-6">

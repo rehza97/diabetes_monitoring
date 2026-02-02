@@ -4,7 +4,10 @@ import { query, where, orderBy, Timestamp } from "firebase/firestore";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { PatientsTable } from "@/components/dashboard/tables/PatientsTable";
-import { PatientFilters, type PatientFiltersState } from "@/components/dashboard/filters/PatientFilters";
+import {
+  PatientFilters,
+  type PatientFiltersState,
+} from "@/components/dashboard/filters/PatientFilters";
 import { PatientForm } from "@/components/dashboard/forms/PatientForm";
 import { BulkActions } from "@/components/dashboard/BulkActions";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -13,23 +16,53 @@ import { Plus, Download, Upload } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
 import { ImportDialog } from "@/components/dashboard/ImportDialog";
 import { usePatients, useUsers } from "@/hooks/useFirestore";
-import { patientsCollection, usersCollection, deletePatient } from "@/lib/firestore-helpers";
+import {
+  patientsCollection,
+  usersCollection,
+  deletePatient,
+} from "@/lib/firestore-helpers";
 import { exportPatientsToExcel, exportPatientsToCSV } from "@/utils/export";
 import type { FirestorePatient, FirestoreUser } from "@/types/firestore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
 // Logging utility
-const logError = (context: string, error: unknown, details?: Record<string, unknown>) => {
-  console.error(`[PatientsManagementPage] Error in ${context}:`, error, details);
+const logError = (
+  context: string,
+  error: unknown,
+  details?: Record<string, unknown>,
+) => {
+  console.error(
+    `[PatientsManagementPage] Error in ${context}:`,
+    error,
+    details,
+  );
 };
 
-const logWarning = (context: string, message: string, details?: Record<string, unknown>) => {
-  console.warn(`[PatientsManagementPage] Warning in ${context}:`, message, details);
+const logWarning = (
+  context: string,
+  message: string,
+  details?: Record<string, unknown>,
+) => {
+  console.warn(
+    `[PatientsManagementPage] Warning in ${context}:`,
+    message,
+    details,
+  );
 };
 
-const logInfo = (context: string, message: string, details?: Record<string, unknown>) => {
+const logInfo = (
+  context: string,
+  message: string,
+  details?: Record<string, unknown>,
+) => {
   console.log(`[PatientsManagementPage] Info in ${context}:`, message, details);
 };
 
@@ -37,25 +70,28 @@ export function PatientsManagementPage() {
   const navigate = useNavigate();
   const [isFormOpen, setIsFormOpen] = useState(false);
   // PatientForm expects snake_case format, so we store the transformed patient
-  const [editingPatient, setEditingPatient] = useState<{
-    id: string;
-    file_number?: string;
-    first_name: string;
-    last_name: string;
-    date_of_birth: string;
-    gender: "male" | "female";
-    phone: string;
-    email?: string;
-    address?: string;
-    diabetes_type: "type1" | "type2" | "gestational";
-    diagnosis_date: string;
-    blood_type?: string;
-    weight?: number;
-    height?: number;
-    doctor_id?: string;
-    nurse_id?: string;
-    avatar?: string;
-  } | undefined>();
+  const [editingPatient, setEditingPatient] = useState<
+    | {
+        id: string;
+        file_number?: string;
+        first_name: string;
+        last_name: string;
+        date_of_birth: string;
+        gender: "male" | "female";
+        phone: string;
+        email?: string;
+        address?: string;
+        diabetes_type: "type1" | "type2" | "gestational";
+        diagnosis_date: string;
+        blood_type?: string;
+        weight?: number;
+        height?: number;
+        doctor_id?: string;
+        nurse_id?: string;
+        avatar?: string;
+      }
+    | undefined
+  >();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<PatientFiltersState>({
     search: "",
@@ -79,23 +115,23 @@ export function PatientsManagementPage() {
   const patientsQuery = useMemo(() => {
     try {
       const constraints: any[] = [orderBy("createdAt", "desc")];
-      
+
       if (filters.diabetesType !== "all") {
         constraints.push(where("diabetesType", "==", filters.diabetesType));
       }
-      
+
       if (filters.status !== "all") {
         constraints.push(where("lastReadingStatus", "==", filters.status));
       }
-      
+
       if (filters.doctorId !== "all") {
         constraints.push(where("doctorId", "==", filters.doctorId));
       }
-      
+
       if (filters.nurseId !== "all") {
         constraints.push(where("nurseId", "==", filters.nurseId));
       }
-      
+
       const q = query(patientsCollection, ...constraints);
       logInfo("patientsQuery", "Query created successfully", { filters });
       return q;
@@ -106,7 +142,11 @@ export function PatientsManagementPage() {
   }, [filters.diabetesType, filters.status, filters.doctorId, filters.nurseId]);
 
   // Fetch patients and users (for doctor/nurse names)
-  const { data: patients, loading: patientsLoading, error: patientsError } = usePatients(patientsQuery);
+  const {
+    data: patients,
+    loading: patientsLoading,
+    error: patientsError,
+  } = usePatients(patientsQuery);
   const usersQuery = useMemo(() => {
     try {
       const q = query(usersCollection, where("isActive", "==", true));
@@ -117,35 +157,54 @@ export function PatientsManagementPage() {
       throw error;
     }
   }, []);
-  const { data: users, loading: usersLoading, error: usersError } = useUsers(usersQuery);
+  const {
+    data: users,
+    loading: usersLoading,
+    error: usersError,
+  } = useUsers(usersQuery);
 
   // Filter users by role for dropdowns
-  const doctors = useMemo(() => 
-    users?.filter(u => u.role === "doctor") || [], 
-    [users]
+  const doctors = useMemo(
+    () => users?.filter((u) => u.role === "doctor") || [],
+    [users],
   );
-  const nurses = useMemo(() => 
-    users?.filter(u => u.role === "nurse") || [], 
-    [users]
+  const nurses = useMemo(
+    () => users?.filter((u) => u.role === "nurse") || [],
+    [users],
   );
 
   // Log data fetching status
   useEffect(() => {
     logInfo("dataFetching", "Data fetching status", {
-      patients: { loading: patientsLoading, count: patients?.length ?? 0, error: patientsError?.message },
-      users: { loading: usersLoading, count: users?.length ?? 0, error: usersError?.message },
+      patients: {
+        loading: patientsLoading,
+        count: patients?.length ?? 0,
+        error: patientsError?.message,
+      },
+      users: {
+        loading: usersLoading,
+        count: users?.length ?? 0,
+        error: usersError?.message,
+      },
     });
-  }, [patientsLoading, usersLoading, patients?.length, users?.length, patientsError, usersError]);
+  }, [
+    patientsLoading,
+    usersLoading,
+    patients?.length,
+    users?.length,
+    patientsError,
+    usersError,
+  ]);
 
   // Log errors when they occur
   useEffect(() => {
     if (patientsError) {
-      const errorDetails: Record<string, unknown> = { 
+      const errorDetails: Record<string, unknown> = {
         query: "patientsQuery",
         message: patientsError.message,
         name: patientsError.name,
       };
-      if ('code' in patientsError) {
+      if ("code" in patientsError) {
         errorDetails.code = (patientsError as any).code;
       }
       logError("patientsFetch", patientsError, errorDetails);
@@ -154,12 +213,12 @@ export function PatientsManagementPage() {
 
   useEffect(() => {
     if (usersError) {
-      const errorDetails: Record<string, unknown> = { 
+      const errorDetails: Record<string, unknown> = {
         query: "usersQuery",
         message: usersError.message,
         name: usersError.name,
       };
-      if ('code' in usersError) {
+      if ("code" in usersError) {
         errorDetails.code = (usersError as any).code;
       }
       logError("usersFetch", usersError, errorDetails);
@@ -169,9 +228,14 @@ export function PatientsManagementPage() {
   // Create a map of user IDs to names
   const userNamesMap = useMemo(() => {
     const map = new Map<string, string>();
-    users?.forEach(user => {
+    users?.forEach((user) => {
       if (user.id) {
-        map.set(user.id, `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "");
+        map.set(
+          user.id,
+          `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+            user.email ||
+            "",
+        );
       }
     });
     return map;
@@ -180,7 +244,7 @@ export function PatientsManagementPage() {
   // Filter and transform patients to match table format
   const filteredPatients = useMemo(() => {
     if (!patients) return [];
-    
+
     return patients
       .filter((patient) => {
         if (filters.search) {
@@ -198,14 +262,25 @@ export function PatientsManagementPage() {
         file_number: patient.fileNumber || "",
         first_name: patient.firstName || "",
         last_name: patient.lastName || "",
-        date_of_birth: patient.dateOfBirth?.toDate().toISOString().split("T")[0] || "",
+        date_of_birth:
+          patient.dateOfBirth?.toDate().toISOString().split("T")[0] || "",
         diabetes_type: patient.diabetesType,
-        doctor_name: patient.doctorId ? userNamesMap.get(patient.doctorId) : undefined,
-        nurse_name: patient.nurseId ? userNamesMap.get(patient.nurseId) : undefined,
-        last_reading: patient.lastReadingValue && patient.lastReadingDate ? {
-          value: patient.lastReadingValue,
-          date: patient.lastReadingDate.toDate().toISOString().split("T")[0],
-        } : undefined,
+        doctor_name: patient.doctorId
+          ? userNamesMap.get(patient.doctorId)
+          : undefined,
+        nurse_name: patient.nurseId
+          ? userNamesMap.get(patient.nurseId)
+          : undefined,
+        last_reading:
+          patient.lastReadingValue && patient.lastReadingDate
+            ? {
+                value: patient.lastReadingValue,
+                date: patient.lastReadingDate
+                  .toDate()
+                  .toISOString()
+                  .split("T")[0],
+              }
+            : undefined,
         status: patient.lastReadingStatus || "normal",
         avatar: patient.avatar,
       }));
@@ -221,18 +296,25 @@ export function PatientsManagementPage() {
   };
 
   const handleEditPatient = (patient: { id: string }) => {
-    logInfo("handleEditPatient", "Starting edit patient", { patientId: patient.id });
-    
+    logInfo("handleEditPatient", "Starting edit patient", {
+      patientId: patient.id,
+    });
+
     // Find the original FirestorePatient from the patients array
     // The patient passed from the table might be transformed (snake_case)
-    const originalPatient = patients?.find(p => p.id === patient.id);
-    
+    const originalPatient = patients?.find((p) => p.id === patient.id);
+
     if (!originalPatient) {
-      console.error("❌ [handleEditPatient] Patient not found in patients array:", patient.id);
-      logError("handleEditPatient", new Error("Patient not found"), { patientId: patient.id });
+      console.error(
+        "❌ [handleEditPatient] Patient not found in patients array:",
+        patient.id,
+      );
+      logError("handleEditPatient", new Error("Patient not found"), {
+        patientId: patient.id,
+      });
       return;
     }
-    
+
     console.group("🔍 [handleEditPatient] Patient data transformation");
     console.log("Original FirestorePatient:", originalPatient);
     console.log("  firstName:", originalPatient.firstName);
@@ -242,20 +324,27 @@ export function PatientsManagementPage() {
     console.log("  nurseId:", originalPatient.nurseId);
     console.log("  dateOfBirth:", originalPatient.dateOfBirth);
     console.log("  diabetesType:", originalPatient.diabetesType);
-    
+
     // Transform FirestorePatient (camelCase) to PatientForm format (snake_case)
     const formPatient = {
       id: originalPatient.id,
       file_number: originalPatient.fileNumber || "",
       first_name: originalPatient.firstName || "",
       last_name: originalPatient.lastName || "",
-      date_of_birth: originalPatient.dateOfBirth?.toDate().toISOString().split("T")[0] || "",
+      date_of_birth:
+        originalPatient.dateOfBirth?.toDate().toISOString().split("T")[0] || "",
       gender: originalPatient.gender,
       phone: originalPatient.phone || "",
       email: originalPatient.email || "",
-      address: originalPatient.address ? (typeof originalPatient.address === "string" ? originalPatient.address : JSON.stringify(originalPatient.address)) : "",
+      address: originalPatient.address
+        ? typeof originalPatient.address === "string"
+          ? originalPatient.address
+          : JSON.stringify(originalPatient.address)
+        : "",
       diabetes_type: originalPatient.diabetesType,
-      diagnosis_date: originalPatient.diagnosisDate?.toDate().toISOString().split("T")[0] || "",
+      diagnosis_date:
+        originalPatient.diagnosisDate?.toDate().toISOString().split("T")[0] ||
+        "",
       blood_type: originalPatient.bloodType || "",
       weight: originalPatient.weight,
       height: originalPatient.height,
@@ -263,7 +352,7 @@ export function PatientsManagementPage() {
       nurse_id: originalPatient.nurseId || "",
       avatar: originalPatient.avatar,
     };
-    
+
     console.log("Transformed form patient:", formPatient);
     console.log("  first_name:", formPatient.first_name);
     console.log("  last_name:", formPatient.last_name);
@@ -271,26 +360,34 @@ export function PatientsManagementPage() {
     console.log("  doctor_id:", formPatient.doctor_id);
     console.log("  nurse_id:", formPatient.nurse_id);
     console.groupEnd();
-    
+
     // Set both state updates together - React will batch them
     setEditingPatient(formPatient as any);
     setIsFormOpen(true);
   };
 
-  const handleDeletePatient = async (patient: { id: string; first_name?: string; last_name?: string }) => {
-    const name = patient.first_name && patient.last_name ? `${patient.first_name} ${patient.last_name}` : "ce patient";
-    if (
-      !confirm(
-        `Êtes-vous sûr de vouloir supprimer ${name} ?`
-      )
-    ) {
+  const handleDeletePatient = async (patient: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+  }) => {
+    const name =
+      patient.first_name && patient.last_name
+        ? `${patient.first_name} ${patient.last_name}`
+        : "ce patient";
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${name} ?`)) {
       return;
     }
-    
+
     try {
-      logInfo("deletePatient", "Deleting patient", { patientId: patient.id, patientName: name });
+      logInfo("deletePatient", "Deleting patient", {
+        patientId: patient.id,
+        patientName: name,
+      });
       await deletePatient(patient.id);
-      logInfo("deletePatient", "Patient deleted successfully", { patientId: patient.id });
+      logInfo("deletePatient", "Patient deleted successfully", {
+        patientId: patient.id,
+      });
       addNotification({
         type: "success",
         title: "Patient supprimé",
@@ -308,8 +405,9 @@ export function PatientsManagementPage() {
 
   const handleFormSubmit = async (data: any) => {
     try {
-      const { createPatient, updatePatient } = await import("@/lib/firestore-helpers");
-      
+      const { createPatient, updatePatient } =
+        await import("@/lib/firestore-helpers");
+
       // Transform form data (snake_case) to Firestore format (camelCase)
       const firstName = data.first_name || data.firstName;
       const lastName = data.last_name || data.lastName;
@@ -324,57 +422,83 @@ export function PatientsManagementPage() {
       const weight = data.weight;
       const height = data.height;
       // Convert "none" to empty string, then to undefined if empty
-      const doctorId = (data.doctor_id || data.doctorId) === "none" || !(data.doctor_id || data.doctorId) ? undefined : (data.doctor_id || data.doctorId);
-      const nurseId = (data.nurse_id || data.nurseId) === "none" || !(data.nurse_id || data.nurseId) ? undefined : (data.nurse_id || data.nurseId);
-      
+      const doctorId =
+        (data.doctor_id || data.doctorId) === "none" ||
+        !(data.doctor_id || data.doctorId)
+          ? undefined
+          : data.doctor_id || data.doctorId;
+      const nurseId =
+        (data.nurse_id || data.nurseId) === "none" ||
+        !(data.nurse_id || data.nurseId)
+          ? undefined
+          : data.nurse_id || data.nurseId;
+
       // Validate that at least one assignment is selected (form should handle this, but double-check)
       if (!doctorId && !nurseId) {
-        throw new Error("Veuillez sélectionner au moins un médecin ou une infirmière responsable.");
+        throw new Error(
+          "Veuillez sélectionner au moins un médecin ou une infirmière responsable.",
+        );
       }
-      
+
       if (editingPatient) {
-        logInfo("updatePatient", "Updating patient", { patientId: editingPatient.id });
+        logInfo("updatePatient", "Updating patient", {
+          patientId: editingPatient.id,
+        });
         await updatePatient(editingPatient.id, {
           firstName,
           lastName,
-          dateOfBirth: dateOfBirth ? Timestamp.fromDate(new Date(dateOfBirth)) : undefined,
+          dateOfBirth: dateOfBirth
+            ? Timestamp.fromDate(new Date(dateOfBirth))
+            : undefined,
           gender,
           phone,
           email,
           address,
           diabetesType,
-          diagnosisDate: diagnosisDate ? Timestamp.fromDate(new Date(diagnosisDate)) : undefined,
+          diagnosisDate: diagnosisDate
+            ? Timestamp.fromDate(new Date(diagnosisDate))
+            : undefined,
           bloodType,
           weight,
           height,
           doctorId,
           nurseId,
         });
-        logInfo("updatePatient", "Patient updated successfully", { patientId: editingPatient.id });
+        logInfo("updatePatient", "Patient updated successfully", {
+          patientId: editingPatient.id,
+        });
         addNotification({
           type: "success",
           title: "Patient modifié",
           message: `${firstName} ${lastName} a été modifié avec succès.`,
         });
       } else {
-        logInfo("createPatient", "Creating patient", { patientName: `${firstName} ${lastName}` });
+        logInfo("createPatient", "Creating patient", {
+          patientName: `${firstName} ${lastName}`,
+        });
         await createPatient({
           firstName,
           lastName,
-          dateOfBirth: dateOfBirth ? Timestamp.fromDate(new Date(dateOfBirth)) : Timestamp.now(),
+          dateOfBirth: dateOfBirth
+            ? Timestamp.fromDate(new Date(dateOfBirth))
+            : Timestamp.now(),
           gender,
           phone,
           email,
           address,
           diabetesType,
-          diagnosisDate: diagnosisDate ? Timestamp.fromDate(new Date(diagnosisDate)) : Timestamp.now(),
+          diagnosisDate: diagnosisDate
+            ? Timestamp.fromDate(new Date(diagnosisDate))
+            : Timestamp.now(),
           bloodType,
           weight,
           height,
           doctorId,
           nurseId,
         });
-        logInfo("createPatient", "Patient created successfully", { patientName: `${firstName} ${lastName}` });
+        logInfo("createPatient", "Patient created successfully", {
+          patientName: `${firstName} ${lastName}`,
+        });
         addNotification({
           type: "success",
           title: "Patient créé",
@@ -384,7 +508,10 @@ export function PatientsManagementPage() {
       setIsFormOpen(false);
       setEditingPatient(undefined);
     } catch (error) {
-      logError("formSubmit", error, { isEdit: !!editingPatient, patientId: editingPatient?.id });
+      logError("formSubmit", error, {
+        isEdit: !!editingPatient,
+        patientId: editingPatient?.id,
+      });
       addNotification({
         type: "error",
         title: "Erreur",
@@ -397,19 +524,26 @@ export function PatientsManagementPage() {
     try {
       // Handle case where event object is passed instead of format string
       const exportFormat = typeof format === "string" ? format : "excel";
-      
-      logInfo("exportPatients", "Exporting patients", { format: exportFormat, count: filteredPatients.length });
-      const patientsToExport = filteredPatients.map(p => {
-        const originalPatient = patients?.find(pat => pat.id === p.id);
-        return originalPatient || null;
-      }).filter((p): p is FirestorePatient => p !== null);
-      
+
+      logInfo("exportPatients", "Exporting patients", {
+        format: exportFormat,
+        count: filteredPatients.length,
+      });
+      const patientsToExport = filteredPatients
+        .map((p) => {
+          const originalPatient = patients?.find((pat) => pat.id === p.id);
+          return originalPatient || null;
+        })
+        .filter((p): p is FirestorePatient => p !== null);
+
       if (exportFormat === "excel") {
         exportPatientsToExcel(patientsToExport);
       } else {
         exportPatientsToCSV(patientsToExport);
       }
-      logInfo("exportPatients", "Export completed successfully", { format: exportFormat });
+      logInfo("exportPatients", "Export completed successfully", {
+        format: exportFormat,
+      });
       addNotification({
         type: "success",
         title: "Export réussi",
@@ -435,14 +569,23 @@ export function PatientsManagementPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.length} patient(s) ?`)) {
+    if (
+      !confirm(
+        `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} patient(s) ?`,
+      )
+    ) {
       return;
     }
-    
+
     try {
-      logInfo("bulkDelete", "Bulk deleting patients", { count: selectedIds.length, patientIds: selectedIds });
-      await Promise.all(selectedIds.map(id => deletePatient(id)));
-      logInfo("bulkDelete", "Bulk delete completed successfully", { count: selectedIds.length });
+      logInfo("bulkDelete", "Bulk deleting patients", {
+        count: selectedIds.length,
+        patientIds: selectedIds,
+      });
+      await Promise.all(selectedIds.map((id) => deletePatient(id)));
+      logInfo("bulkDelete", "Bulk delete completed successfully", {
+        count: selectedIds.length,
+      });
       addNotification({
         type: "success",
         title: "Patients supprimés",
@@ -471,10 +614,14 @@ export function PatientsManagementPage() {
   }
 
   if (patientsError) {
-    logError("pageRender", "Rendering error state", { errorMessage: patientsError.message });
+    logError("pageRender", "Rendering error state", {
+      errorMessage: patientsError.message,
+    });
     return (
       <DashboardLayout>
-        <ErrorMessage message={`Erreur lors du chargement des patients: ${patientsError.message}`} />
+        <ErrorMessage
+          message={`Erreur lors du chargement des patients: ${patientsError.message}`}
+        />
       </DashboardLayout>
     );
   }
@@ -484,7 +631,9 @@ export function PatientsManagementPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Gestion des patients</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Gestion des patients
+            </h1>
             <p className="text-muted-foreground mt-1">
               Gérez la base de données complète des patients du système
             </p>
@@ -505,9 +654,9 @@ export function PatientsManagementPage() {
           </div>
         </div>
 
-        <PatientFilters 
+        <PatientFilters
           filters={filters}
-          onFilterChange={setFilters} 
+          onFilterChange={setFilters}
           doctors={doctors}
           nurses={nurses}
         />
@@ -560,7 +709,9 @@ export function PatientsManagementPage() {
                 <ul className="list-disc list-inside mt-2 space-y-1">
                   <li>Prénom, Nom, Date de naissance, Sexe, Téléphone</li>
                   <li>Type de diabète, Date de diagnostic</li>
-                  <li>Optionnel : Email, Adresse, Groupe sanguin, Poids, Taille</li>
+                  <li>
+                    Optionnel : Email, Adresse, Groupe sanguin, Poids, Taille
+                  </li>
                 </ul>
               </div>
             </div>
@@ -568,14 +719,16 @@ export function PatientsManagementPage() {
               <Button variant="outline" onClick={() => setIsImportOpen(false)}>
                 Annuler
               </Button>
-              <Button onClick={() => {
-                addNotification({
-                  type: "info",
-                  title: "Import en cours",
-                  message: "Le fichier est en cours de traitement...",
-                });
-                setIsImportOpen(false);
-              }}>
+              <Button
+                onClick={() => {
+                  addNotification({
+                    type: "info",
+                    title: "Import en cours",
+                    message: "Le fichier est en cours de traitement...",
+                  });
+                  setIsImportOpen(false);
+                }}
+              >
                 Importer
               </Button>
             </div>

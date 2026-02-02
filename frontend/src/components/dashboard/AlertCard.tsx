@@ -1,7 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, X, CheckCircle2, Info, AlertCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  X,
+  CheckCircle2,
+  Info,
+  AlertCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -50,7 +56,9 @@ export function AlertCard({ alert, onDismiss, className }: AlertCardProps) {
   const config = alertConfig[alert.type];
   const Icon = config.icon;
   const timestamp =
-    alert.timestamp instanceof Date ? alert.timestamp : new Date(alert.timestamp);
+    alert.timestamp instanceof Date
+      ? alert.timestamp
+      : new Date(alert.timestamp);
   const handleDismiss = onDismiss ?? alert.onDismiss;
 
   return (
@@ -60,8 +68,12 @@ export function AlertCard({ alert, onDismiss, className }: AlertCardProps) {
           <div className="flex items-start gap-3">
             <Icon className={cn("h-5 w-5 mt-0.5", config.iconColor)} />
             <div className="flex-1">
-              <CardTitle className="text-base font-semibold">{alert.title}</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
+              <CardTitle className="text-base font-semibold">
+                {alert.title}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {alert.message}
+              </p>
             </div>
           </div>
           {handleDismiss && (

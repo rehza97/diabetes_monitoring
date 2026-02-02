@@ -1,6 +1,6 @@
 /**
  * Migration utilities for converting from relational database structure to Firestore
- * 
+ *
  * This file contains helper functions to migrate data from the old structure
  * (with snake_case and separate tables) to the new Firestore structure
  * (with camelCase and subcollections).
@@ -21,11 +21,7 @@ import type {
   CreateFirestoreMedicationDto,
   CreateFirestoreUserDto,
 } from "@/types/firestore";
-import type {
-  Patient,
-  Reading,
-  User,
-} from "@/types";
+import type { Patient, Reading, User } from "@/types";
 
 /**
  * Convert old User format to new Firestore User format
@@ -60,7 +56,7 @@ export function convertUserToFirestore(user: User): CreateFirestoreUserDto {
  * Convert old Patient format to new Firestore Patient format
  */
 export function convertPatientToFirestore(
-  patient: Patient
+  patient: Patient,
 ): CreateFirestorePatientDto {
   return {
     firstName: patient.first_name,
@@ -89,15 +85,17 @@ export function convertPatientToFirestore(
  * Convert old Reading format to new Firestore Reading format
  */
 export function convertReadingToFirestore(
-  reading: Reading
+  reading: Reading,
 ): CreateFirestoreReadingDto {
   // Parse date and time from the old format
   const dateTime = new Date(reading.date);
-  const timeString = reading.time || dateTime.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const timeString =
+    reading.time ||
+    dateTime.toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   return {
     value: reading.value,
@@ -121,7 +119,7 @@ export function convertReadingToFirestore(
  */
 export async function migrateUser(
   oldUser: User,
-  userId: string
+  userId: string,
 ): Promise<void> {
   const firestoreUser = convertUserToFirestore(oldUser);
   await createUser(userId, firestoreUser);
@@ -134,7 +132,7 @@ export async function migratePatient(
   oldPatient: Patient,
   oldReadings: Reading[],
   oldNotes: any[],
-  oldMedications: any[]
+  oldMedications: any[],
 ): Promise<string> {
   // Convert and create patient
   const firestorePatient = convertPatientToFirestore(oldPatient);
@@ -148,7 +146,7 @@ export async function migratePatient(
         patientId,
         firestoreReading,
         reading.recorded_by_id,
-        undefined // recordedByName will be set by denormalization
+        undefined, // recordedByName will be set by denormalization
       );
     }
   }
@@ -159,12 +157,15 @@ export async function migratePatient(
       await createMedicalNote(
         patientId,
         {
-          noteType: note.note_type as "diagnosis" | "prescription" | "observation",
+          noteType: note.note_type as
+            | "diagnosis"
+            | "prescription"
+            | "observation",
           content: note.content,
           isImportant: false,
         },
         note.doctor_id,
-        undefined // doctorName will be set by denormalization
+        undefined, // doctorName will be set by denormalization
       );
     }
   }
@@ -185,7 +186,7 @@ export async function migratePatient(
           notes: medication.notes,
         },
         medication.prescribed_by_id,
-        undefined // prescribedByName will be set by denormalization
+        undefined, // prescribedByName will be set by denormalization
       );
     }
   }
@@ -201,7 +202,7 @@ export async function batchMigratePatients(
   oldReadings: Reading[],
   oldNotes: any[],
   oldMedications: any[],
-  batchSize: number = 10
+  batchSize: number = 10,
 ): Promise<{ success: number; failed: number; errors: string[] }> {
   let success = 0;
   let failed = 0;
@@ -220,7 +221,7 @@ export async function batchMigratePatients(
           errors.push(`Patient ${patient.id}: ${error.message}`);
           console.error(`Failed to migrate patient ${patient.id}:`, error);
         }
-      })
+      }),
     );
 
     // Small delay between batches to avoid rate limiting
@@ -238,7 +239,7 @@ export async function batchMigratePatients(
 export function validateMigrationData(
   patients: Patient[],
   readings: Reading[],
-  users: User[]
+  users: User[],
 ): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
@@ -305,7 +306,7 @@ export async function generateMigrationReport(
   oldReadings: Reading[],
   oldNotes: any[],
   oldMedications: any[],
-  results: { success: number; failed: number; errors: string[] }
+  results: { success: number; failed: number; errors: string[] },
 ): Promise<MigrationReport> {
   const endTime = Date.now();
   const duration = endTime - startTime;

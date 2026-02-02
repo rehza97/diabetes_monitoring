@@ -10,7 +10,7 @@ import { Plus, Edit, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
 import { usePatients } from "@/hooks/useFirestore";
 import { useRealtimeScheduledReadings } from "@/hooks/useRealtime";
-import { 
+import {
   patientsCollection,
   getScheduledReadingsCollection,
   createScheduledReading,
@@ -20,7 +20,10 @@ import {
 import { ScheduledReadingForm } from "@/components/dashboard/forms/ScheduledReadingForm";
 import { formatDate, formatDateTime } from "@/utils/formatters";
 import { formatFullName } from "@/utils/helpers";
-import type { FirestorePatient, FirestoreScheduledReading } from "@/types/firestore";
+import type {
+  FirestorePatient,
+  FirestoreScheduledReading,
+} from "@/types/firestore";
 
 const readingTypeLabels: Record<string, string> = {
   fasting: "À jeun",
@@ -54,12 +57,13 @@ export function ScheduledReadingsPage() {
   const patientsQuery = useMemo(() => {
     return query(patientsCollection, where("isActive", "==", true));
   }, []);
-  const { data: patients, loading: patientsLoading } = usePatients(patientsQuery);
+  const { data: patients, loading: patientsLoading } =
+    usePatients(patientsQuery);
 
   // Fetch scheduled readings - for single patient use hook, for all use manual fetch
   const singlePatientScheduled = useRealtimeScheduledReadings(
     selectedPatientId !== "all" ? selectedPatientId : null,
-    { enabled: selectedPatientId !== "all" && !patientsLoading }
+    { enabled: selectedPatientId !== "all" && !patientsLoading },
   );
 
   const [allScheduledReadings, setAllScheduledReadings] = useState<
@@ -73,7 +77,10 @@ export function ScheduledReadingsPage() {
       // Use hook data for single patient
       if (singlePatientScheduled.data) {
         setAllScheduledReadings(
-          singlePatientScheduled.data.map(s => ({ ...s, patientId: selectedPatientId }))
+          singlePatientScheduled.data.map((s) => ({
+            ...s,
+            patientId: selectedPatientId,
+          })),
         );
         setLoading(singlePatientScheduled.loading);
         setError(singlePatientScheduled.error);
@@ -86,8 +93,9 @@ export function ScheduledReadingsPage() {
       setLoading(true);
       setError(null);
       try {
-        const all: Array<FirestoreScheduledReading & { patientId: string }> = [];
-        
+        const all: Array<FirestoreScheduledReading & { patientId: string }> =
+          [];
+
         if (!patients) {
           setLoading(false);
           return;
@@ -96,15 +104,23 @@ export function ScheduledReadingsPage() {
         for (const patient of patients) {
           if (!patient.id) continue;
           try {
-            const scheduledCollection = getScheduledReadingsCollection(patient.id);
-            const q = query(scheduledCollection, orderBy("scheduledDate", "asc"));
+            const scheduledCollection = getScheduledReadingsCollection(
+              patient.id,
+            );
+            const q = query(
+              scheduledCollection,
+              orderBy("scheduledDate", "asc"),
+            );
             const { getDocs } = await import("firebase/firestore");
             const snapshot = await getDocs(q);
-            snapshot.docs.forEach(doc => {
+            snapshot.docs.forEach((doc) => {
               all.push({ ...doc.data(), id: doc.id, patientId: patient.id });
             });
           } catch (err) {
-            console.error(`Error fetching scheduled readings for patient ${patient.id}:`, err);
+            console.error(
+              `Error fetching scheduled readings for patient ${patient.id}:`,
+              err,
+            );
           }
         }
 
@@ -119,7 +135,14 @@ export function ScheduledReadingsPage() {
     if (patients && !patientsLoading) {
       fetchAll();
     }
-  }, [patients, patientsLoading, selectedPatientId, singlePatientScheduled.data, singlePatientScheduled.loading, singlePatientScheduled.error]);
+  }, [
+    patients,
+    patientsLoading,
+    selectedPatientId,
+    singlePatientScheduled.data,
+    singlePatientScheduled.loading,
+    singlePatientScheduled.error,
+  ]);
 
   const handleFormSubmit = async (data: {
     patientId: string;
@@ -131,14 +154,18 @@ export function ScheduledReadingsPage() {
     try {
       const { Timestamp } = await import("firebase/firestore");
       const scheduledDate = Timestamp.fromDate(new Date(data.scheduledDate));
-      
+
       if (editingScheduled) {
-        await updateScheduledReading(editingScheduled.patientId, editingScheduled.scheduled.id, {
-          readingType: data.readingType as any,
-          scheduledDate,
-          scheduledTime: data.scheduledTime,
-          notes: data.notes || undefined,
-        });
+        await updateScheduledReading(
+          editingScheduled.patientId,
+          editingScheduled.scheduled.id,
+          {
+            readingType: data.readingType as any,
+            scheduledDate,
+            scheduledTime: data.scheduledTime,
+            notes: data.notes || undefined,
+          },
+        );
         addNotification({
           type: "success",
           title: "Planning modifié",
@@ -164,7 +191,9 @@ export function ScheduledReadingsPage() {
       addNotification({
         type: "error",
         title: "Erreur",
-        message: error?.message || "Une erreur est survenue lors de l'enregistrement du planning.",
+        message:
+          error?.message ||
+          "Une erreur est survenue lors de l'enregistrement du planning.",
       });
     }
   };
@@ -184,14 +213,21 @@ export function ScheduledReadingsPage() {
       addNotification({
         type: "error",
         title: "Erreur",
-        message: error?.message || "Une erreur est survenue lors de la suppression du planning.",
+        message:
+          error?.message ||
+          "Une erreur est survenue lors de la suppression du planning.",
       });
     }
   };
 
-  const handleMarkAsCompleted = async (patientId: string, scheduledId: string) => {
+  const handleMarkAsCompleted = async (
+    patientId: string,
+    scheduledId: string,
+  ) => {
     try {
-      await updateScheduledReading(patientId, scheduledId, { status: "completed" });
+      await updateScheduledReading(patientId, scheduledId, {
+        status: "completed",
+      });
       addNotification({
         type: "success",
         title: "Planning complété",
@@ -209,7 +245,9 @@ export function ScheduledReadingsPage() {
 
   const handleMarkAsMissed = async (patientId: string, scheduledId: string) => {
     try {
-      await updateScheduledReading(patientId, scheduledId, { status: "missed" });
+      await updateScheduledReading(patientId, scheduledId, {
+        status: "missed",
+      });
       addNotification({
         type: "success",
         title: "Planning manqué",
@@ -227,7 +265,7 @@ export function ScheduledReadingsPage() {
 
   const patientsMap = useMemo(() => {
     const map = new Map<string, FirestorePatient>();
-    patients?.forEach(patient => {
+    patients?.forEach((patient) => {
       if (patient.id) map.set(patient.id, patient);
     });
     return map;
@@ -243,10 +281,12 @@ export function ScheduledReadingsPage() {
               Gérez les mesures planifiées pour vos patients
             </p>
           </div>
-          <Button onClick={() => {
-            setEditingScheduled(null);
-            setIsFormOpen(true);
-          }}>
+          <Button
+            onClick={() => {
+              setEditingScheduled(null);
+              setIsFormOpen(true);
+            }}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Nouveau planning
           </Button>
@@ -265,7 +305,9 @@ export function ScheduledReadingsPage() {
               <CardContent>
                 <div className="flex gap-4">
                   <div className="flex-1">
-                    <label className="text-sm font-medium mb-2 block">Patient</label>
+                    <label className="text-sm font-medium mb-2 block">
+                      Patient
+                    </label>
                     <select
                       value={selectedPatientId}
                       onChange={(e) => setSelectedPatientId(e.target.value)}
@@ -274,7 +316,10 @@ export function ScheduledReadingsPage() {
                       <option value="all">Tous les patients</option>
                       {patients?.map((patient) => (
                         <option key={patient.id} value={patient.id}>
-                          {formatFullName(patient.firstName || "", patient.lastName || "")}
+                          {formatFullName(
+                            patient.firstName || "",
+                            patient.lastName || "",
+                          )}
                         </option>
                       ))}
                     </select>
@@ -308,26 +353,36 @@ export function ScheduledReadingsPage() {
                               <div className="flex items-center gap-2 mb-1">
                                 <h4 className="font-semibold">
                                   {patient
-                                    ? formatFullName(patient.firstName || "", patient.lastName || "")
+                                    ? formatFullName(
+                                        patient.firstName || "",
+                                        patient.lastName || "",
+                                      )
                                     : `Patient ${item.patientId}`}
                                 </h4>
                                 <Badge variant="outline">
-                                  {readingTypeLabels[item.readingType] || item.readingType}
+                                  {readingTypeLabels[item.readingType] ||
+                                    item.readingType}
                                 </Badge>
                                 <Badge
                                   variant={
                                     item.status === "completed"
                                       ? "default"
                                       : item.status === "missed"
-                                      ? "destructive"
-                                      : "secondary"
+                                        ? "destructive"
+                                        : "secondary"
                                   }
                                 >
                                   {statusLabels[item.status] || item.status}
                                 </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground">
-                                {formatDate(item.scheduledDate.toDate().toISOString().split("T")[0])} à {item.scheduledTime}
+                                {formatDate(
+                                  item.scheduledDate
+                                    .toDate()
+                                    .toISOString()
+                                    .split("T")[0],
+                                )}{" "}
+                                à {item.scheduledTime}
                               </p>
                               {item.notes && (
                                 <p className="text-sm mt-1">{item.notes}</p>
@@ -339,7 +394,12 @@ export function ScheduledReadingsPage() {
                                   <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => handleMarkAsCompleted(item.patientId, item.id)}
+                                    onClick={() =>
+                                      handleMarkAsCompleted(
+                                        item.patientId,
+                                        item.id,
+                                      )
+                                    }
                                     title="Marquer comme complété"
                                   >
                                     <CheckCircle2 className="h-4 w-4" />
@@ -347,7 +407,12 @@ export function ScheduledReadingsPage() {
                                   <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => handleMarkAsMissed(item.patientId, item.id)}
+                                    onClick={() =>
+                                      handleMarkAsMissed(
+                                        item.patientId,
+                                        item.id,
+                                      )
+                                    }
                                     title="Marquer comme manqué"
                                   >
                                     <XCircle className="h-4 w-4" />
@@ -358,7 +423,10 @@ export function ScheduledReadingsPage() {
                                 variant="outline"
                                 size="icon"
                                 onClick={() => {
-                                  setEditingScheduled({ scheduled: item, patientId: item.patientId });
+                                  setEditingScheduled({
+                                    scheduled: item,
+                                    patientId: item.patientId,
+                                  });
                                   setIsFormOpen(true);
                                 }}
                                 title="Modifier"
@@ -368,7 +436,9 @@ export function ScheduledReadingsPage() {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={() => handleDelete(item.patientId, item.id)}
+                                onClick={() =>
+                                  handleDelete(item.patientId, item.id)
+                                }
                                 title="Supprimer"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -386,21 +456,25 @@ export function ScheduledReadingsPage() {
         )}
 
         <ScheduledReadingForm
-          scheduledReading={editingScheduled ? {
-            id: editingScheduled.scheduled.id,
-            patientId: editingScheduled.patientId,
-            readingType: editingScheduled.scheduled.readingType,
-            scheduledDate: editingScheduled.scheduled.scheduledDate,
-            scheduledTime: editingScheduled.scheduled.scheduledTime,
-            notes: editingScheduled.scheduled.notes,
-          } : undefined}
+          scheduledReading={
+            editingScheduled
+              ? {
+                  id: editingScheduled.scheduled.id,
+                  patientId: editingScheduled.patientId,
+                  readingType: editingScheduled.scheduled.readingType,
+                  scheduledDate: editingScheduled.scheduled.scheduledDate,
+                  scheduledTime: editingScheduled.scheduled.scheduledTime,
+                  notes: editingScheduled.scheduled.notes,
+                }
+              : undefined
+          }
           isOpen={isFormOpen}
           onClose={() => {
             setIsFormOpen(false);
             setEditingScheduled(null);
           }}
           onSubmit={handleFormSubmit}
-          patients={patients?.map(p => ({
+          patients={patients?.map((p) => ({
             id: p.id || "",
             firstName: p.firstName || "",
             lastName: p.lastName || "",

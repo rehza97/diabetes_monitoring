@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/useKeyboardShortcuts";
+import {
+  useKeyboardShortcuts,
+  commonShortcuts,
+} from "@/hooks/useKeyboardShortcuts";
 
 interface DashboardLayoutProps {
   children: ReactNode;

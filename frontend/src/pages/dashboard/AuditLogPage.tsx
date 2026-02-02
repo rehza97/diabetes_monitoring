@@ -1,5 +1,10 @@
 import { useState, useMemo } from "react";
-import { query, where, orderBy, limit as firestoreLimit } from "firebase/firestore";
+import {
+  query,
+  where,
+  orderBy,
+  limit as firestoreLimit,
+} from "firebase/firestore";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,26 +39,41 @@ export function AuditLogPage() {
 
   // Create query based on filters (where → orderBy → limit)
   const auditLogsQuery = useMemo(() => {
-    const constraints: (ReturnType<typeof where> | ReturnType<typeof orderBy> | ReturnType<typeof firestoreLimit>)[] = [];
-    if (filters.userId !== "all") constraints.push(where("userId", "==", filters.userId));
-    if (filters.action !== "all") constraints.push(where("action", "==", filters.action));
-    if (filters.entityType !== "all") constraints.push(where("entityType", "==", filters.entityType));
+    const constraints: (
+      | ReturnType<typeof where>
+      | ReturnType<typeof orderBy>
+      | ReturnType<typeof firestoreLimit>
+    )[] = [];
+    if (filters.userId !== "all")
+      constraints.push(where("userId", "==", filters.userId));
+    if (filters.action !== "all")
+      constraints.push(where("action", "==", filters.action));
+    if (filters.entityType !== "all")
+      constraints.push(where("entityType", "==", filters.entityType));
     constraints.push(orderBy("createdAt", "desc"), firestoreLimit(1000));
     return query(auditLogsCollection, ...constraints);
   }, [filters.userId, filters.action, filters.entityType]);
 
   // Fetch audit logs and users
-  const { data: auditLogs, loading, error } = useRealtimeAuditLogs(auditLogsQuery);
+  const {
+    data: auditLogs,
+    loading,
+    error,
+  } = useRealtimeAuditLogs(auditLogsQuery);
   const usersQuery = useMemo(
     () => query(usersCollection, where("isActive", "==", true)),
-    []
+    [],
   );
-  const { data: users, loading: usersLoading, error: usersError } = useUsers(usersQuery);
+  const {
+    data: users,
+    loading: usersLoading,
+    error: usersError,
+  } = useUsers(usersQuery);
 
   // Create user map
   const usersMap = useMemo(() => {
     const map = new Map<string, FirestoreUser>();
-    users?.forEach(user => {
+    users?.forEach((user) => {
       if (user.id) map.set(user.id, user);
     });
     return map;
@@ -62,13 +82,15 @@ export function AuditLogPage() {
   // Filter and transform logs to match table format
   const filteredLogs = useMemo(() => {
     if (!auditLogs) return [];
-    
+
     return auditLogs
       .filter((log) => {
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
           const user = log.userId ? usersMap.get(log.userId) : undefined;
-          const userName = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : log.userName || "";
+          const userName = user
+            ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+            : log.userName || "";
           if (
             !userName.toLowerCase().includes(searchLower) &&
             !log.entityId?.toLowerCase().includes(searchLower)
@@ -84,7 +106,9 @@ export function AuditLogPage() {
           id: log.id,
           user: {
             id: log.userId || "",
-            name: user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : log.userName || "Utilisateur inconnu",
+            name: user
+              ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+              : log.userName || "Utilisateur inconnu",
             email: user?.email || "",
           },
           action: log.action,
@@ -94,7 +118,8 @@ export function AuditLogPage() {
           new_data: log.newData,
           ip_address: log.ipAddress || "",
           user_agent: log.userAgent || "",
-          created_at: log.createdAt?.toDate().toISOString() || new Date().toISOString(),
+          created_at:
+            log.createdAt?.toDate().toISOString() || new Date().toISOString(),
         };
       });
   }, [auditLogs, filters.search, usersMap]);
@@ -167,7 +192,9 @@ export function AuditLogPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Journal d'audit</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Journal d'audit
+            </h1>
             <p className="text-muted-foreground mt-1">
               Consultez l'historique complet de toutes les actions du système
             </p>
@@ -202,14 +229,18 @@ export function AuditLogPage() {
                   id="search"
                   placeholder="Utilisateur, ID entité..."
                   value={filters.search}
-                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, search: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="user">Utilisateur</Label>
                 <Select
                   value={filters.userId}
-                  onValueChange={(value) => setFilters({ ...filters, userId: value })}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, userId: value })
+                  }
                 >
                   <SelectTrigger id="user">
                     <SelectValue placeholder="Tous les utilisateurs" />
@@ -228,7 +259,9 @@ export function AuditLogPage() {
                 <Label htmlFor="action">Action</Label>
                 <Select
                   value={filters.action}
-                  onValueChange={(value) => setFilters({ ...filters, action: value })}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, action: value })
+                  }
                 >
                   <SelectTrigger id="action">
                     <SelectValue placeholder="Toutes les actions" />
@@ -246,7 +279,9 @@ export function AuditLogPage() {
                 <Label htmlFor="entityType">Type d'entité</Label>
                 <Select
                   value={filters.entityType}
-                  onValueChange={(value) => setFilters({ ...filters, entityType: value })}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, entityType: value })
+                  }
                 >
                   <SelectTrigger id="entityType">
                     <SelectValue placeholder="Tous les types" />

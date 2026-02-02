@@ -49,7 +49,7 @@ export function useRealtimeDocument<T>(
     enabled?: boolean;
     onNext?: (data: T | null) => void;
     onError?: (error: Error) => void;
-  } = {}
+  } = {},
 ): {
   data: T | null;
   loading: boolean;
@@ -122,7 +122,7 @@ export function useRealtimeDocument<T>(
         setError(error);
         setLoading(false);
         onErrorRef.current?.(error);
-      }
+      },
     );
 
     return () => {
@@ -144,7 +144,7 @@ export function useRealtimeQuery<T>(
     enabled?: boolean;
     onNext?: (data: T[]) => void;
     onError?: (error: Error) => void;
-  } = {}
+  } = {},
 ): {
   data: T[];
   loading: boolean;
@@ -215,7 +215,7 @@ export function useRealtimeQuery<T>(
         setError(error);
         setLoading(false);
         onErrorRef.current?.(error);
-      }
+      },
     );
 
     return () => {
@@ -236,7 +236,7 @@ export function useRealtimeUser(
     enabled?: boolean;
     onNext?: (user: FirestoreUser | null) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   const docRef =
     userId && options?.enabled !== false
@@ -255,11 +255,14 @@ export function useRealtimePatient(
     enabled?: boolean;
     onNext?: (patient: FirestorePatient | null) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   const docRef =
     patientId && options?.enabled !== false
-      ? (doc(patientsCollection, patientId) as DocumentReference<FirestorePatient>)
+      ? (doc(
+          patientsCollection,
+          patientId,
+        ) as DocumentReference<FirestorePatient>)
       : null;
 
   return useRealtimeDocument<FirestorePatient>(docRef, options);
@@ -277,7 +280,7 @@ export function useRealtimeReadings(
     orderDirection?: "asc" | "desc";
     onNext?: (readings: FirestoreReading[]) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   const queryRef = useMemo(() => {
     if (!patientId || options?.enabled === false) {
@@ -286,19 +289,21 @@ export function useRealtimeReadings(
     const collection = getReadingsCollection(patientId);
     const constraints = [];
     if (options?.orderByField === "date" || !options?.orderByField) {
-      constraints.push(
-        orderBy("date", options?.orderDirection || "desc")
-      );
+      constraints.push(orderBy("date", options?.orderDirection || "desc"));
     } else {
-      constraints.push(
-        orderBy("createdAt", options?.orderDirection || "desc")
-      );
+      constraints.push(orderBy("createdAt", options?.orderDirection || "desc"));
     }
     if (options?.limitCount) {
       constraints.push(limit(options.limitCount));
     }
     return query(collection, ...constraints) as Query<FirestoreReading>;
-  }, [patientId, options?.enabled, options?.orderByField, options?.orderDirection, options?.limitCount]);
+  }, [
+    patientId,
+    options?.enabled,
+    options?.orderByField,
+    options?.orderDirection,
+    options?.limitCount,
+  ]);
 
   return useRealtimeQuery<FirestoreReading>(queryRef, options);
 }
@@ -314,7 +319,7 @@ export function useRealtimeNotifications(
     limitCount?: number;
     onNext?: (notifications: FirestoreNotification[]) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   const enabled = options?.enabled !== false && !!userId;
   const queryRef = useMemo(() => {
@@ -346,7 +351,7 @@ export function useRealtimeMessages(
     limitCount?: number;
     onNext?: (messages: FirestoreMessage[]) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   const queryRef =
     userId && options?.enabled !== false
@@ -361,8 +366,8 @@ export function useRealtimeMessages(
             constraints.push(
               or(
                 where("senderId", "==", userId),
-                where("recipientId", "==", userId)
-              )
+                where("recipientId", "==", userId),
+              ),
             );
           }
           if (options?.unreadOnly) {
@@ -372,7 +377,10 @@ export function useRealtimeMessages(
           if (options?.limitCount) {
             constraints.push(limit(options.limitCount));
           }
-          return query(messagesCollection, ...(constraints as QueryConstraint[])) as Query<FirestoreMessage>;
+          return query(
+            messagesCollection,
+            ...(constraints as QueryConstraint[]),
+          ) as Query<FirestoreMessage>;
         })()
       : null;
 
@@ -389,7 +397,7 @@ export function useRealtimeMedicalNotes(
     limitCount?: number;
     onNext?: (notes: FirestoreMedicalNote[]) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   const queryRef = useMemo(() => {
     if (!patientId || options?.enabled === false) {
@@ -417,7 +425,7 @@ export function useRealtimeMedications(
     limitCount?: number;
     onNext?: (medications: FirestoreMedication[]) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   const queryRef = useMemo(() => {
     if (!patientId || options?.enabled === false) {
@@ -449,7 +457,7 @@ export function useRealtimeScheduledReadings(
     limitCount?: number;
     onNext?: (scheduled: FirestoreScheduledReading[]) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   const queryRef =
     patientId && options?.enabled !== false
@@ -463,7 +471,10 @@ export function useRealtimeScheduledReadings(
           if (options?.limitCount) {
             constraints.push(limit(options.limitCount));
           }
-          return query(collection, ...constraints) as Query<FirestoreScheduledReading>;
+          return query(
+            collection,
+            ...constraints,
+          ) as Query<FirestoreScheduledReading>;
         })()
       : null;
 
@@ -481,7 +492,7 @@ export function useRealtimePatientAlerts(
     limitCount?: number;
     onNext?: (alerts: FirestorePatientAlert[]) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   const queryRef = useMemo(() => {
     if (!patientId || options?.enabled === false) {
@@ -511,7 +522,7 @@ export function useRealtimeAuditLogs(
     enabled?: boolean;
     onNext?: (logs: FirestoreAuditLog[]) => void;
     onError?: (error: Error) => void;
-  }
+  },
 ) {
   return useRealtimeQuery<FirestoreAuditLog>(queryRef, options);
 }
@@ -524,43 +535,65 @@ export function useRealtimeSubscription() {
   const subscriptionsRef = useRef<Map<string, Unsubscribe>>(new Map());
 
   const subscribe = useCallback(
-    <T,>(
+    <T>(
       key: string,
       queryOrDoc: Query<T> | DocumentReference<T>,
       onNext: (data: T | T[] | null) => void,
-      onError?: (error: Error) => void
+      onError?: (error: Error) => void,
     ) => {
       // Unsubscribe existing if any
       unsubscribe(key);
 
       const unsubscribeFn = onSnapshot(
         queryOrDoc as any,
-        (snapshot: { exists: () => boolean; id: string; data: () => unknown } | { docs: { id: string; data: () => unknown }[] }) => {
+        (
+          snapshot:
+            | { exists: () => boolean; id: string; data: () => unknown }
+            | { docs: { id: string; data: () => unknown }[] },
+        ) => {
           if ("exists" in snapshot && typeof snapshot.exists === "function") {
-            const snap = snapshot as { exists: () => boolean; id: string; data: () => unknown };
+            const snap = snapshot as {
+              exists: () => boolean;
+              id: string;
+              data: () => unknown;
+            };
             const data = snap.exists()
-              ? ({ id: snap.id, ...(typeof snap.data() === "object" && snap.data() !== null ? snap.data() as object : {}) } as T)
+              ? ({
+                  id: snap.id,
+                  ...(typeof snap.data() === "object" && snap.data() !== null
+                    ? (snap.data() as object)
+                    : {}),
+                } as T)
               : null;
             onNext(data);
           } else {
-            const snap = snapshot as { docs: { id: string; data: () => unknown }[] };
-            const data = snap.docs.map((d: { id: string; data: () => unknown }) => {
-              const raw = d.data();
-              return { id: d.id, ...(typeof raw === "object" && raw !== null ? raw as object : {}) };
-            }) as T[];
+            const snap = snapshot as {
+              docs: { id: string; data: () => unknown }[];
+            };
+            const data = snap.docs.map(
+              (d: { id: string; data: () => unknown }) => {
+                const raw = d.data();
+                return {
+                  id: d.id,
+                  ...(typeof raw === "object" && raw !== null
+                    ? (raw as object)
+                    : {}),
+                };
+              },
+            ) as T[];
             onNext(data);
           }
         },
         (err: unknown) => {
           const error = err instanceof Error ? err : new Error(String(err));
           onError?.(error);
-        }
+        },
       );
 
       subscriptionsRef.current.set(key, unsubscribeFn);
       return unsubscribeFn;
     },
-    []
+    [],
   );
 
   const unsubscribe = useCallback((key: string) => {

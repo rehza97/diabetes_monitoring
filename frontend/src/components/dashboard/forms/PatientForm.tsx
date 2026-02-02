@@ -171,10 +171,12 @@ export function PatientForm({
   useEffect(() => {
     if (isOpen) {
       setSubmitError(null);
-      
+
       // Log patient data for debugging
       if (patient) {
-        console.group("📝 [PatientForm] Patient data received and form initialization");
+        console.group(
+          "📝 [PatientForm] Patient data received and form initialization",
+        );
         console.log("Patient prop received:", patient);
         console.log("Patient fields:", {
           first_name: patient.first_name,
@@ -188,7 +190,7 @@ export function PatientForm({
         });
         console.groupEnd();
       }
-      
+
       const formData = patient
         ? {
             first_name: patient.first_name || "",
@@ -204,15 +206,21 @@ export function PatientForm({
             weight: patient.weight,
             height: patient.height,
             // Convert empty string to "none" for Select components (Radix UI doesn't allow empty string values)
-            doctor_id: patient.doctor_id && patient.doctor_id !== "" ? patient.doctor_id : "none",
-            nurse_id: patient.nurse_id && patient.nurse_id !== "" ? patient.nurse_id : "none",
+            doctor_id:
+              patient.doctor_id && patient.doctor_id !== ""
+                ? patient.doctor_id
+                : "none",
+            nurse_id:
+              patient.nurse_id && patient.nurse_id !== ""
+                ? patient.nurse_id
+                : "none",
           }
         : {
             // Set default doctor to admin if available
             doctor_id: defaultAdminId || "none",
             nurse_id: "none",
           };
-      
+
       console.log("📝 [PatientForm] Form data being reset:", formData);
       reset(formData);
       setAvatarPreview(patient?.avatar || null);
@@ -751,24 +759,27 @@ export function PatientForm({
         </div>
 
         <form
-          onSubmit={handleSubmit(onFormSubmit as SubmitHandler<PatientFormData>, (errors) => {
-            console.error("Form validation errors:", errors);
-            const errorFields = Object.keys(errors);
-            const errorMessages = Object.values(errors)
-              .map((err: any) => err?.message || "Erreur de validation")
-              .join(", ");
-            setSubmitError(`Erreurs de validation: ${errorMessages}`);
-            // Scroll to first error
-            if (errorFields.length > 0) {
-              const firstErrorField = document.querySelector(
-                `[name="${errorFields[0]}"]`,
-              );
-              firstErrorField?.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-              });
-            }
-          })}
+          onSubmit={handleSubmit(
+            onFormSubmit as SubmitHandler<PatientFormData>,
+            (errors) => {
+              console.error("Form validation errors:", errors);
+              const errorFields = Object.keys(errors);
+              const errorMessages = Object.values(errors)
+                .map((err: any) => err?.message || "Erreur de validation")
+                .join(", ");
+              setSubmitError(`Erreurs de validation: ${errorMessages}`);
+              // Scroll to first error
+              if (errorFields.length > 0) {
+                const firstErrorField = document.querySelector(
+                  `[name="${errorFields[0]}"]`,
+                );
+                firstErrorField?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }
+            },
+          )}
           className="space-y-4"
         >
           {renderStepContent()}

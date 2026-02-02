@@ -17,7 +17,14 @@ interface ChartCardProps {
   className?: string;
 }
 
-export function ChartCard({ title, type, data, config, onExport, className }: ChartCardProps) {
+export function ChartCard({
+  title,
+  type,
+  data,
+  config,
+  onExport,
+  className,
+}: ChartCardProps) {
   const chartData = data || [];
 
   const renderChart = () => {
@@ -40,9 +47,19 @@ export function ChartCard({ title, type, data, config, onExport, className }: Ch
           />
         );
       case "pie":
-        return <PieChart data={chartData as { name: string; value: number }[]} colors={config?.colors} />;
+        return (
+          <PieChart
+            data={chartData as { name: string; value: number }[]}
+            colors={config?.colors}
+          />
+        );
       case "doughnut":
-        return <DoughnutChart data={chartData as { name: string; value: number }[]} colors={config?.colors} />;
+        return (
+          <DoughnutChart
+            data={chartData as { name: string; value: number }[]}
+            colors={config?.colors}
+          />
+        );
       case "area":
         return (
           <AreaChart
@@ -52,9 +69,17 @@ export function ChartCard({ title, type, data, config, onExport, className }: Ch
           />
         );
       case "heatmap":
-        return <HeatmapChart data={chartData as { day: string; hour: number; value: number }[]} />;
+        return (
+          <HeatmapChart
+            data={chartData as { day: string; hour: number; value: number }[]}
+          />
+        );
       default:
-        return <div className="text-muted-foreground">Type de graphique non supporté</div>;
+        return (
+          <div className="text-muted-foreground">
+            Type de graphique non supporté
+          </div>
+        );
     }
   };
 
@@ -63,7 +88,12 @@ export function ChartCard({ title, type, data, config, onExport, className }: Ch
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base font-semibold">{title}</CardTitle>
         {onExport && (
-          <Button variant="ghost" size="icon" onClick={onExport} aria-label="Exporter le graphique">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onExport}
+            aria-label="Exporter le graphique"
+          >
             <Download className="h-4 w-4" />
           </Button>
         )}
@@ -80,4 +110,3 @@ export function ChartCard({ title, type, data, config, onExport, className }: Ch
     </Card>
   );
 }
-

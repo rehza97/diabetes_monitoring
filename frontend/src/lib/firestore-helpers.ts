@@ -66,22 +66,22 @@ function createConverter<T>(): FirestoreDataConverter<T> {
 
 // Collection references
 export const usersCollection = collection(db, "users").withConverter(
-  createConverter<FirestoreUser>()
+  createConverter<FirestoreUser>(),
 );
 export const patientsCollection = collection(db, "patients").withConverter(
-  createConverter<FirestorePatient>()
+  createConverter<FirestorePatient>(),
 );
 export const reportsCollection = collection(db, "reports").withConverter(
-  createConverter<FirestoreReport>()
+  createConverter<FirestoreReport>(),
 );
 export const auditLogsCollection = collection(db, "auditLogs").withConverter(
-  createConverter<FirestoreAuditLog>()
+  createConverter<FirestoreAuditLog>(),
 );
 export const settingsCollection = collection(db, "settings").withConverter(
-  createConverter<FirestoreSetting>()
+  createConverter<FirestoreSetting>(),
 );
 export const messagesCollection = collection(db, "messages").withConverter(
-  createConverter<FirestoreMessage>()
+  createConverter<FirestoreMessage>(),
 );
 
 // User Helpers
@@ -93,7 +93,7 @@ export async function getUser(userId: string): Promise<FirestoreUser | null> {
 
 export async function createUser(
   userId: string,
-  data: CreateFirestoreUserDto
+  data: CreateFirestoreUserDto,
 ): Promise<void> {
   const docRef = doc(usersCollection, userId);
   await setDoc(docRef, {
@@ -125,7 +125,7 @@ export async function createUser(
  * This calls a Cloud Function that uses Admin SDK to create the user
  */
 export async function createUserWithAuth(
-  data: CreateFirestoreUserDto & { password: string }
+  data: CreateFirestoreUserDto & { password: string },
 ): Promise<{ userId: string; email: string }> {
   const createUserFunction = httpsCallable<
     {
@@ -167,7 +167,8 @@ export async function createUserWithAuth(
     // Re-throw with a more user-friendly message
     if (error.code) {
       // Firebase Functions HttpsError
-      const errorMessage = error.message || "Erreur inconnue lors de la création de l'utilisateur";
+      const errorMessage =
+        error.message || "Erreur inconnue lors de la création de l'utilisateur";
       throw new Error(errorMessage);
     }
     throw error;
@@ -176,10 +177,10 @@ export async function createUserWithAuth(
 
 export async function updateUser(
   userId: string,
-  data: Partial<FirestoreUser>
+  data: Partial<FirestoreUser>,
 ): Promise<void> {
   const docRef = doc(usersCollection, userId);
-  
+
   // Filter out undefined values - Firestore doesn't accept undefined
   const cleanData: Record<string, any> = {};
   for (const [key, value] of Object.entries(data)) {
@@ -187,7 +188,7 @@ export async function updateUser(
       cleanData[key] = value;
     }
   }
-  
+
   await updateDoc(docRef, {
     ...cleanData,
     updatedAt: serverTimestamp(),
@@ -200,7 +201,7 @@ export async function deleteUser(userId: string): Promise<void> {
 }
 
 export async function queryUsers(
-  constraints: QueryConstraint[] = []
+  constraints: QueryConstraint[] = [],
 ): Promise<FirestoreUser[]> {
   const q = query(usersCollection, ...constraints);
   const querySnapshot = await getDocs(q);
@@ -213,7 +214,7 @@ export function getPatientRef(patientId: string): DocumentReference {
 }
 
 export async function getPatient(
-  patientId: string
+  patientId: string,
 ): Promise<FirestorePatient | null> {
   const docRef = getPatientRef(patientId);
   const docSnap = await getDoc(docRef);
@@ -221,10 +222,10 @@ export async function getPatient(
 }
 
 export async function createPatient(
-  data: CreateFirestorePatientDto
+  data: CreateFirestorePatientDto,
 ): Promise<string> {
   const docRef = doc(patientsCollection);
-  
+
   // Filter out undefined values - Firestore doesn't accept undefined
   const cleanData: Record<string, any> = {};
   for (const [key, value] of Object.entries(data)) {
@@ -232,7 +233,7 @@ export async function createPatient(
       cleanData[key] = value;
     }
   }
-  
+
   await setDoc(docRef, {
     ...cleanData,
     fileNumber: `PAT-${Date.now()}`, // Generate file number
@@ -246,10 +247,10 @@ export async function createPatient(
 
 export async function updatePatient(
   patientId: string,
-  data: Partial<FirestorePatient>
+  data: Partial<FirestorePatient>,
 ): Promise<void> {
   const docRef = getPatientRef(patientId);
-  
+
   // Filter out undefined values - Firestore doesn't accept undefined
   const cleanData: Record<string, any> = {};
   for (const [key, value] of Object.entries(data)) {
@@ -257,7 +258,7 @@ export async function updatePatient(
       cleanData[key] = value;
     }
   }
-  
+
   await updateDoc(docRef, {
     ...cleanData,
     updatedAt: serverTimestamp(),
@@ -270,7 +271,7 @@ export async function deletePatient(patientId: string): Promise<void> {
 }
 
 export async function queryPatients(
-  constraints: QueryConstraint[]
+  constraints: QueryConstraint[],
 ): Promise<FirestorePatient[]> {
   const q = query(patientsCollection, ...constraints);
   const querySnapshot = await getDocs(q);
@@ -279,17 +280,16 @@ export async function queryPatients(
 
 // Reading Helpers (Subcollection)
 export function getReadingsCollection(patientId: string) {
-  return collection(
-    db,
-    `patients/${patientId}/readings`
-  ).withConverter(createConverter<FirestoreReading>());
+  return collection(db, `patients/${patientId}/readings`).withConverter(
+    createConverter<FirestoreReading>(),
+  );
 }
 
 export async function createReading(
   patientId: string,
   data: CreateFirestoreReadingDto,
   recordedById: string,
-  recordedByName?: string
+  recordedByName?: string,
 ): Promise<string> {
   const readingsCollection = getReadingsCollection(patientId);
   const docRef = doc(readingsCollection);
@@ -305,27 +305,23 @@ export async function createReading(
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
   } as DocumentData);
-  
+
   // Update patient's last reading info (denormalization)
   await updatePatient(patientId, {
     lastReadingDate: data.date,
     lastReadingValue: data.value,
     lastReadingStatus: status,
   });
-  
+
   return docRef.id;
 }
 
 export async function getReadings(
   patientId: string,
-  constraints: QueryConstraint[] = []
+  constraints: QueryConstraint[] = [],
 ): Promise<FirestoreReading[]> {
   const readingsCollection = getReadingsCollection(patientId);
-  const q = query(
-    readingsCollection,
-    orderBy("date", "desc"),
-    ...constraints
-  );
+  const q = query(readingsCollection, orderBy("date", "desc"), ...constraints);
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
 }
@@ -333,26 +329,34 @@ export async function getReadings(
 export async function updateReading(
   patientId: string,
   readingId: string,
-  data: Partial<CreateFirestoreReadingDto>
+  data: Partial<CreateFirestoreReadingDto>,
 ): Promise<void> {
   const readingsCollection = getReadingsCollection(patientId);
   const docRef = doc(readingsCollection, readingId);
-  
+
   const updateData: any = { ...data };
   if (data.value !== undefined && data.unit) {
     const thresholds = await getMeasurementThresholds();
-    updateData.status = calculateReadingStatus(data.value, data.unit, thresholds);
+    updateData.status = calculateReadingStatus(
+      data.value,
+      data.unit,
+      thresholds,
+    );
   }
 
   await updateDoc(docRef, {
     ...updateData,
     updatedAt: serverTimestamp(),
   });
-  
+
   // Update patient's last reading if this is the most recent
   if (data.date) {
     const patient = await getPatient(patientId);
-    if (patient && patient.lastReadingDate && data.date.toMillis() >= patient.lastReadingDate.toMillis()) {
+    if (
+      patient &&
+      patient.lastReadingDate &&
+      data.date.toMillis() >= patient.lastReadingDate.toMillis()
+    ) {
       await updatePatient(patientId, {
         lastReadingDate: data.date,
         lastReadingValue: data.value,
@@ -364,7 +368,7 @@ export async function updateReading(
 
 export async function deleteReading(
   patientId: string,
-  readingId: string
+  readingId: string,
 ): Promise<void> {
   const readingsCollection = getReadingsCollection(patientId);
   const docRef = doc(readingsCollection, readingId);
@@ -373,18 +377,16 @@ export async function deleteReading(
 
 // Collection group query for all readings across all patients
 export function getReadingsCollectionGroup() {
-  return collectionGroup(db, "readings").withConverter(createConverter<FirestoreReading>());
+  return collectionGroup(db, "readings").withConverter(
+    createConverter<FirestoreReading>(),
+  );
 }
 
 export async function queryAllReadings(
-  constraints: QueryConstraint[] = []
+  constraints: QueryConstraint[] = [],
 ): Promise<Array<FirestoreReading & { patientId: string }>> {
   const readingsGroup = getReadingsCollectionGroup();
-  const q = query(
-    readingsGroup,
-    orderBy("date", "desc"),
-    ...constraints
-  );
+  const q = query(readingsGroup, orderBy("date", "desc"), ...constraints);
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => {
     // Extract patientId from path: patients/{patientId}/readings/{readingId}
@@ -400,28 +402,29 @@ export async function queryAllReadings(
 function calculateReadingStatus(
   value: number,
   unit: "mg/dL" | "mmol/L",
-  thresholds?: MeasurementThresholds
+  thresholds?: MeasurementThresholds,
 ): "normal" | "warning" | "critical" {
   const valueInMgDl = unit === "mmol/L" ? value * 18.0182 : value;
   const t = thresholds ?? DEFAULT_THRESHOLDS;
-  if (valueInMgDl < t.critical_min || valueInMgDl > t.critical_max) return "critical";
-  if (valueInMgDl >= t.normal_min && valueInMgDl <= t.normal_max) return "normal";
+  if (valueInMgDl < t.critical_min || valueInMgDl > t.critical_max)
+    return "critical";
+  if (valueInMgDl >= t.normal_min && valueInMgDl <= t.normal_max)
+    return "normal";
   return "warning";
 }
 
 // Medical Notes Helpers
 export function getMedicalNotesCollection(patientId: string) {
-  return collection(
-    db,
-    `patients/${patientId}/medicalNotes`
-  ).withConverter(createConverter<FirestoreMedicalNote>());
+  return collection(db, `patients/${patientId}/medicalNotes`).withConverter(
+    createConverter<FirestoreMedicalNote>(),
+  );
 }
 
 export async function createMedicalNote(
   patientId: string,
   data: CreateFirestoreMedicalNoteDto,
   doctorId: string,
-  doctorName?: string
+  doctorName?: string,
 ): Promise<string> {
   const notesCollection = getMedicalNotesCollection(patientId);
   const docRef = doc(notesCollection);
@@ -439,7 +442,7 @@ export async function createMedicalNote(
 export async function updateMedicalNote(
   patientId: string,
   noteId: string,
-  data: Partial<CreateFirestoreMedicalNoteDto>
+  data: Partial<CreateFirestoreMedicalNoteDto>,
 ): Promise<void> {
   const notesCollection = getMedicalNotesCollection(patientId);
   const docRef = doc(notesCollection, noteId);
@@ -451,7 +454,7 @@ export async function updateMedicalNote(
 
 export async function deleteMedicalNote(
   patientId: string,
-  noteId: string
+  noteId: string,
 ): Promise<void> {
   const notesCollection = getMedicalNotesCollection(patientId);
   const docRef = doc(notesCollection, noteId);
@@ -460,22 +463,21 @@ export async function deleteMedicalNote(
 
 // Medications Helpers
 export function getMedicationsCollection(patientId: string) {
-  return collection(
-    db,
-    `patients/${patientId}/medications`
-  ).withConverter(createConverter<FirestoreMedication>());
+  return collection(db, `patients/${patientId}/medications`).withConverter(
+    createConverter<FirestoreMedication>(),
+  );
 }
 
 export async function createMedication(
   patientId: string,
   data: CreateFirestoreMedicationDto,
   prescribedById: string,
-  prescribedByName?: string
+  prescribedByName?: string,
 ): Promise<string> {
   const medicationsCollection = getMedicationsCollection(patientId);
   const docRef = doc(medicationsCollection);
   const isActive = !data.endDate || data.endDate.toMillis() > Date.now();
-  
+
   await setDoc(docRef, {
     ...data,
     prescribedById,
@@ -490,7 +492,7 @@ export async function createMedication(
 export async function updateMedication(
   patientId: string,
   medicationId: string,
-  data: Partial<CreateFirestoreMedicationDto>
+  data: Partial<CreateFirestoreMedicationDto>,
 ): Promise<void> {
   const medicationsCollection = getMedicationsCollection(patientId);
   const docRef = doc(medicationsCollection, medicationId);
@@ -506,7 +508,7 @@ export async function updateMedication(
 
 export async function deleteMedication(
   patientId: string,
-  medicationId: string
+  medicationId: string,
 ): Promise<void> {
   const medicationsCollection = getMedicationsCollection(patientId);
   const docRef = doc(medicationsCollection, medicationId);
@@ -517,13 +519,13 @@ export async function deleteMedication(
 export function getScheduledReadingsCollection(patientId: string) {
   return collection(
     db,
-    `patients/${patientId}/scheduledReadings`
+    `patients/${patientId}/scheduledReadings`,
   ).withConverter(createConverter<FirestoreScheduledReading>());
 }
 
 export async function createScheduledReading(
   patientId: string,
-  data: CreateFirestoreScheduledReadingDto
+  data: CreateFirestoreScheduledReadingDto,
 ): Promise<string> {
   const scheduledCollection = getScheduledReadingsCollection(patientId);
   const docRef = doc(scheduledCollection);
@@ -540,7 +542,7 @@ export async function createScheduledReading(
 export async function updateScheduledReading(
   patientId: string,
   scheduledReadingId: string,
-  data: Partial<CreateFirestoreScheduledReadingDto & { status?: string }>
+  data: Partial<CreateFirestoreScheduledReadingDto & { status?: string }>,
 ): Promise<void> {
   const scheduledCollection = getScheduledReadingsCollection(patientId);
   const docRef = doc(scheduledCollection, scheduledReadingId);
@@ -552,7 +554,7 @@ export async function updateScheduledReading(
 
 export async function deleteScheduledReading(
   patientId: string,
-  scheduledReadingId: string
+  scheduledReadingId: string,
 ): Promise<void> {
   const scheduledCollection = getScheduledReadingsCollection(patientId);
   const docRef = doc(scheduledCollection, scheduledReadingId);
@@ -561,15 +563,14 @@ export async function deleteScheduledReading(
 
 // Notifications Helpers (User Subcollection)
 export function getNotificationsCollection(userId: string) {
-  return collection(
-    db,
-    `users/${userId}/notifications`
-  ).withConverter(createConverter<FirestoreNotification>());
+  return collection(db, `users/${userId}/notifications`).withConverter(
+    createConverter<FirestoreNotification>(),
+  );
 }
 
 export async function createNotification(
   userId: string,
-  data: CreateFirestoreNotificationDto
+  data: CreateFirestoreNotificationDto,
 ): Promise<string> {
   const notificationsCollection = getNotificationsCollection(userId);
   const docRef = doc(notificationsCollection);
@@ -584,13 +585,13 @@ export async function createNotification(
 
 export async function getNotifications(
   userId: string,
-  constraints: QueryConstraint[] = []
+  constraints: QueryConstraint[] = [],
 ): Promise<FirestoreNotification[]> {
   const notificationsCollection = getNotificationsCollection(userId);
   const q = query(
     notificationsCollection,
     orderBy("createdAt", "desc"),
-    ...constraints
+    ...constraints,
   );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
@@ -599,7 +600,7 @@ export async function getNotifications(
 export async function updateNotification(
   userId: string,
   notificationId: string,
-  data: Partial<FirestoreNotification>
+  data: Partial<FirestoreNotification>,
 ): Promise<void> {
   const notificationsCollection = getNotificationsCollection(userId);
   const docRef = doc(notificationsCollection, notificationId);
@@ -611,7 +612,7 @@ export async function updateNotification(
 
 export async function deleteNotification(
   userId: string,
-  notificationId: string
+  notificationId: string,
 ): Promise<void> {
   const notificationsCollection = getNotificationsCollection(userId);
   const docRef = doc(notificationsCollection, notificationId);
@@ -624,7 +625,7 @@ export function getReportRef(reportId: string): DocumentReference {
 }
 
 export async function getReport(
-  reportId: string
+  reportId: string,
 ): Promise<FirestoreReport | null> {
   const docRef = getReportRef(reportId);
   const docSnap = await getDoc(docRef);
@@ -633,7 +634,7 @@ export async function getReport(
 
 export async function createReport(
   data: CreateFirestoreReportDto,
-  createdById: string
+  createdById: string,
 ): Promise<string> {
   const docRef = doc(reportsCollection);
   await setDoc(docRef, {
@@ -648,7 +649,7 @@ export async function createReport(
 
 export async function updateReport(
   reportId: string,
-  data: Partial<FirestoreReport>
+  data: Partial<FirestoreReport>,
 ): Promise<void> {
   const docRef = getReportRef(reportId);
   await updateDoc(docRef, {
@@ -663,7 +664,7 @@ export async function deleteReport(reportId: string): Promise<void> {
 }
 
 export async function queryReports(
-  constraints: QueryConstraint[]
+  constraints: QueryConstraint[],
 ): Promise<FirestoreReport[]> {
   const q = query(reportsCollection, ...constraints);
   const querySnapshot = await getDocs(q);
@@ -674,7 +675,7 @@ export async function queryReports(
 export async function createMessage(
   data: CreateFirestoreMessageDto,
   senderId: string,
-  senderName?: string
+  senderName?: string,
 ): Promise<string> {
   const docRef = doc(messagesCollection);
   await setDoc(docRef, {
@@ -689,7 +690,9 @@ export async function createMessage(
 }
 
 // Settings Helpers
-export async function getSetting(key: string): Promise<FirestoreSetting | null> {
+export async function getSetting(
+  key: string,
+): Promise<FirestoreSetting | null> {
   const q = query(settingsCollection, where("key", "==", key), limit(1));
   const querySnapshot = await getDocs(q);
   if (querySnapshot.empty) return null;
@@ -697,12 +700,12 @@ export async function getSetting(key: string): Promise<FirestoreSetting | null> 
 }
 
 export async function getSettingsByCategory(
-  category: string
+  category: string,
 ): Promise<FirestoreSetting[]> {
   const q = query(
     settingsCollection,
     where("category", "==", category),
-    orderBy("updatedAt", "desc")
+    orderBy("updatedAt", "desc"),
   );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
@@ -711,7 +714,7 @@ export async function getSettingsByCategory(
 export async function updateSetting(
   settingId: string,
   value: any,
-  updatedById: string
+  updatedById: string,
 ): Promise<void> {
   const docRef = doc(settingsCollection, settingId);
   await updateDoc(docRef, {
@@ -728,7 +731,7 @@ export async function createSetting(
     category: string;
     description?: string;
   },
-  createdById: string
+  createdById: string,
 ): Promise<string> {
   const docRef = doc(settingsCollection);
   await setDoc(docRef, {
@@ -768,12 +771,24 @@ export async function getMeasurementThresholds(): Promise<MeasurementThresholds>
     const rows = await getSettingsByCategory("measurements");
     const m = new Map(rows.map((s) => [s.key, s.value]));
     return {
-      normal_min: toNum(m.get("measurements.normal_min")) || DEFAULT_THRESHOLDS.normal_min,
-      normal_max: toNum(m.get("measurements.normal_max")) || DEFAULT_THRESHOLDS.normal_max,
-      warning_min: toNum(m.get("measurements.warning_min")) || DEFAULT_THRESHOLDS.warning_min,
-      warning_max: toNum(m.get("measurements.warning_max")) || DEFAULT_THRESHOLDS.warning_max,
-      critical_min: toNum(m.get("measurements.critical_min")) || DEFAULT_THRESHOLDS.critical_min,
-      critical_max: toNum(m.get("measurements.critical_max")) || DEFAULT_THRESHOLDS.critical_max,
+      normal_min:
+        toNum(m.get("measurements.normal_min")) ||
+        DEFAULT_THRESHOLDS.normal_min,
+      normal_max:
+        toNum(m.get("measurements.normal_max")) ||
+        DEFAULT_THRESHOLDS.normal_max,
+      warning_min:
+        toNum(m.get("measurements.warning_min")) ||
+        DEFAULT_THRESHOLDS.warning_min,
+      warning_max:
+        toNum(m.get("measurements.warning_max")) ||
+        DEFAULT_THRESHOLDS.warning_max,
+      critical_min:
+        toNum(m.get("measurements.critical_min")) ||
+        DEFAULT_THRESHOLDS.critical_min,
+      critical_max:
+        toNum(m.get("measurements.critical_max")) ||
+        DEFAULT_THRESHOLDS.critical_max,
     };
   } catch {
     return { ...DEFAULT_THRESHOLDS };
@@ -782,10 +797,9 @@ export async function getMeasurementThresholds(): Promise<MeasurementThresholds>
 
 // Patient Documents Helpers
 export function getPatientDocumentsCollection(patientId: string) {
-  return collection(
-    db,
-    `patients/${patientId}/documents`
-  ).withConverter(createConverter<FirestorePatientDocument>());
+  return collection(db, `patients/${patientId}/documents`).withConverter(
+    createConverter<FirestorePatientDocument>(),
+  );
 }
 
 export async function createPatientDocument(
@@ -798,7 +812,7 @@ export async function createPatientDocument(
     category?: "lab_result" | "prescription" | "report" | "other";
     description?: string;
   },
-  uploadedById: string
+  uploadedById: string,
 ): Promise<string> {
   const documentsCollection = getPatientDocumentsCollection(patientId);
   const docRef = doc(documentsCollection);
@@ -811,7 +825,7 @@ export async function createPatientDocument(
 }
 
 export async function getPatientDocuments(
-  patientId: string
+  patientId: string,
 ): Promise<FirestorePatientDocument[]> {
   const documentsCollection = getPatientDocumentsCollection(patientId);
   const q = query(documentsCollection, orderBy("createdAt", "desc"));
@@ -822,20 +836,20 @@ export async function getPatientDocuments(
 // Reading Templates Helpers (stored in settings or separate collection)
 export function getReadingTemplatesCollection() {
   return collection(db, "readingTemplates").withConverter(
-    createConverter<FirestoreReadingTemplate>()
+    createConverter<FirestoreReadingTemplate>(),
   );
 }
 
 export async function getReadingTemplates(
-  createdById?: string
+  createdById?: string,
 ): Promise<FirestoreReadingTemplate[]> {
   const templatesCollection = getReadingTemplatesCollection();
   const constraints: QueryConstraint[] = [orderBy("createdAt", "desc")];
-  
+
   if (createdById) {
     constraints.unshift(where("createdById", "==", createdById));
   }
-  
+
   const q = query(templatesCollection, ...constraints);
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
@@ -843,7 +857,7 @@ export async function getReadingTemplates(
 
 export async function createReadingTemplate(
   data: CreateFirestoreReadingTemplateDto,
-  createdById: string
+  createdById: string,
 ): Promise<string> {
   const templatesCollection = getReadingTemplatesCollection();
   const docRef = doc(templatesCollection);
@@ -859,15 +873,14 @@ export async function createReadingTemplate(
 
 // Patient Alerts Helpers
 export function getPatientAlertsCollection(patientId: string) {
-  return collection(
-    db,
-    `patients/${patientId}/alerts`
-  ).withConverter(createConverter<FirestorePatientAlert>());
+  return collection(db, `patients/${patientId}/alerts`).withConverter(
+    createConverter<FirestorePatientAlert>(),
+  );
 }
 
 export async function createPatientAlert(
   patientId: string,
-  data: CreateFirestorePatientAlertDto
+  data: CreateFirestorePatientAlertDto,
 ): Promise<string> {
   const alertsCollection = getPatientAlertsCollection(patientId);
   const docRef = doc(alertsCollection);
@@ -886,21 +899,21 @@ export async function getPatientAlerts(
   options?: {
     resolved?: boolean;
     limitCount?: number;
-  }
+  },
 ): Promise<FirestorePatientAlert[]> {
   const alertsCollection = getPatientAlertsCollection(patientId);
   const constraints: QueryConstraint[] = [];
-  
+
   if (options?.resolved !== undefined) {
     constraints.push(where("isResolved", "==", options.resolved));
   }
-  
+
   constraints.push(orderBy("createdAt", "desc"));
-  
+
   if (options?.limitCount) {
     constraints.push(limit(options.limitCount));
   }
-  
+
   const q = query(alertsCollection, ...constraints);
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
@@ -909,7 +922,7 @@ export async function getPatientAlerts(
 export async function resolvePatientAlert(
   patientId: string,
   alertId: string,
-  resolvedById: string
+  resolvedById: string,
 ): Promise<void> {
   const alertsCollection = getPatientAlertsCollection(patientId);
   const docRef = doc(alertsCollection, alertId);
@@ -924,19 +937,19 @@ export async function resolvePatientAlert(
 export async function acknowledgePatientAlert(
   patientId: string,
   alertId: string,
-  userId: string
+  userId: string,
 ): Promise<void> {
   const alertsCollection = getPatientAlertsCollection(patientId);
   const docRef = doc(alertsCollection, alertId);
   const alertDoc = await getDoc(docRef);
-  
+
   if (!alertDoc.exists()) {
     throw new Error("Alert not found");
   }
-  
+
   const alertData = alertDoc.data();
   const acknowledgedBy = alertData.acknowledgedBy || [];
-  
+
   if (!acknowledgedBy.includes(userId)) {
     await updateDoc(docRef, {
       acknowledgedBy: [...acknowledgedBy, userId],
@@ -957,23 +970,23 @@ export interface PaginationOptions {
 }
 
 export function getPaginationConstraints(
-  options: PaginationOptions = {}
+  options: PaginationOptions = {},
 ): QueryConstraint[] {
   const constraints: QueryConstraint[] = [];
   const pageSize = options.pageSize ?? 20;
-  
+
   constraints.push(limit(pageSize));
-  
+
   if (options.lastDoc) {
     constraints.push(startAfter(options.lastDoc));
   }
-  
+
   return constraints;
 }
 
 // Audit Log Helpers
 export async function queryAuditLogs(
-  constraints: QueryConstraint[] = []
+  constraints: QueryConstraint[] = [],
 ): Promise<FirestoreAuditLog[]> {
   const q = query(auditLogsCollection, ...constraints);
   const querySnapshot = await getDocs(q);

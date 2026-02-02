@@ -64,11 +64,15 @@ export const createPatientSchema = z
       .min(2, "Le prénom doit contenir au moins 2 caractères"),
     last_name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
     date_of_birth: dateSchema,
-    gender: z.enum(["male", "female"], { message: "Veuillez sélectionner un sexe" }),
+    gender: z.enum(["male", "female"], {
+      message: "Veuillez sélectionner un sexe",
+    }),
     phone: phoneSchema,
     email: z.union([emailSchema, z.literal("")]).optional(),
     address: z.string().optional().or(z.literal("")),
-    diabetes_type: z.enum(["type1", "type2", "gestational"], { message: "Veuillez sélectionner un type de diabète" }),
+    diabetes_type: z.enum(["type1", "type2", "gestational"], {
+      message: "Veuillez sélectionner un type de diabète",
+    }),
     diagnosis_date: dateSchema,
     blood_type: z.string().optional().or(z.literal("")),
     weight: z.preprocess((val) => {
@@ -118,13 +122,20 @@ export const createReadingSchema = z.object({
     "random",
   ]),
   date: dateSchema,
-  time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:mm)"),
+  time: z
+    .string()
+    .regex(
+      /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
+      "Format d'heure invalide (HH:mm)",
+    ),
   notes: z.string().optional(),
 });
 
 // Medical Note form validation
 export const createMedicalNoteSchema = z.object({
-  noteType: z.enum(["diagnosis", "prescription", "observation", "followup"], { message: "Veuillez sélectionner un type de note" }),
+  noteType: z.enum(["diagnosis", "prescription", "observation", "followup"], {
+    message: "Veuillez sélectionner un type de note",
+  }),
   content: z.string().min(1, "Le contenu est requis"),
   isImportant: z.boolean().optional(),
   tags: z.array(z.string()).optional(),

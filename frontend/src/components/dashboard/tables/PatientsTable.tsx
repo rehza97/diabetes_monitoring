@@ -96,7 +96,9 @@ export function PatientsTable({
       if (checked) {
         onSelectionChange([...selectedIds, id]);
       } else {
-        onSelectionChange(selectedIds.filter((selectedId) => selectedId !== id));
+        onSelectionChange(
+          selectedIds.filter((selectedId) => selectedId !== id),
+        );
       }
     }
   };
@@ -119,7 +121,10 @@ export function PatientsTable({
             {onSelectionChange && (
               <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedIds.length === patients.length && patients.length > 0}
+                  checked={
+                    selectedIds.length === patients.length &&
+                    patients.length > 0
+                  }
                   onCheckedChange={handleSelectAll}
                   aria-label="Sélectionner tout"
                 />
@@ -139,7 +144,11 @@ export function PatientsTable({
         <TableBody>
           {patients.map((patient) => {
             const age = calculateAge(patient.date_of_birth);
-            const status = patient.status || (patient.last_reading ? getReadingStatus(patient.last_reading.value) : "normal");
+            const status =
+              patient.status ||
+              (patient.last_reading
+                ? getReadingStatus(patient.last_reading.value)
+                : "normal");
 
             return (
               <TableRow key={patient.id}>
@@ -147,12 +156,16 @@ export function PatientsTable({
                   <TableCell>
                     <Checkbox
                       checked={selectedIds.includes(patient.id)}
-                      onCheckedChange={(checked) => handleSelectOne(patient.id, checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleSelectOne(patient.id, checked as boolean)
+                      }
                       aria-label={`Sélectionner ${formatFullName(patient.first_name, patient.last_name)}`}
                     />
                   </TableCell>
                 )}
-                <TableCell className="font-mono text-sm">{patient.file_number}</TableCell>
+                <TableCell className="font-mono text-sm">
+                  {patient.file_number}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar>
@@ -170,7 +183,9 @@ export function PatientsTable({
                 </TableCell>
                 <TableCell>{age} ans</TableCell>
                 <TableCell>
-                  <Badge variant="outline">{diabetesTypeLabels[patient.diabetes_type]}</Badge>
+                  <Badge variant="outline">
+                    {diabetesTypeLabels[patient.diabetes_type]}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {patient.doctor_name || "-"}
@@ -181,7 +196,9 @@ export function PatientsTable({
                 <TableCell>
                   {patient.last_reading ? (
                     <div>
-                      <div className="font-medium">{patient.last_reading.value} mg/dL</div>
+                      <div className="font-medium">
+                        {patient.last_reading.value} mg/dL
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {formatDate(patient.last_reading.date)}
                       </div>
@@ -192,7 +209,11 @@ export function PatientsTable({
                 </TableCell>
                 <TableCell>
                   <Badge className={statusColors[status]}>
-                    {status === "normal" ? "Normal" : status === "warning" ? "Avertissement" : "Critique"}
+                    {status === "normal"
+                      ? "Normal"
+                      : status === "warning"
+                        ? "Avertissement"
+                        : "Critique"}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">

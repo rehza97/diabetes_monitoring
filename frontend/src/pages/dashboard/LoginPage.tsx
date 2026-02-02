@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { loginSchema } from "@/utils/validators";
@@ -18,7 +24,11 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; twoFactorCode?: string }>({});
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+    twoFactorCode?: string;
+  }>({});
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [requires2FA, setRequires2FA] = useState(false);
@@ -44,7 +54,9 @@ export function LoginPage() {
       // Si on est en mode 2FA, valider le code
       if (requires2FA) {
         if (!twoFactorCode || twoFactorCode.length !== 6) {
-          setErrors({ twoFactorCode: "Le code de vérification doit contenir 6 chiffres" });
+          setErrors({
+            twoFactorCode: "Le code de vérification doit contenir 6 chiffres",
+          });
           return;
         }
 
@@ -90,15 +102,22 @@ export function LoginPage() {
       navigate("/dashboard");
     } catch (err) {
       if (err instanceof z.ZodError) {
-        const fieldErrors: { email?: string; password?: string; twoFactorCode?: string } = {};
+        const fieldErrors: {
+          email?: string;
+          password?: string;
+          twoFactorCode?: string;
+        } = {};
         err.issues.forEach((issue) => {
           if (issue.path[0] !== undefined) {
-            fieldErrors[String(issue.path[0]) as keyof typeof fieldErrors] = issue.message;
+            fieldErrors[String(issue.path[0]) as keyof typeof fieldErrors] =
+              issue.message;
           }
         });
         setErrors(fieldErrors);
       } else {
-        setError((err as Error).message || "Erreur de connexion. Veuillez réessayer.");
+        setError(
+          (err as Error).message || "Erreur de connexion. Veuillez réessayer.",
+        );
       }
     } finally {
       setIsLoading(false);
@@ -123,7 +142,8 @@ export function LoginPage() {
           <div>
             <CardTitle className="text-3xl font-bold">Connexion</CardTitle>
             <CardDescription className="mt-2">
-              Entrez vos identifiants pour accéder au tableau de bord administratif
+              Entrez vos identifiants pour accéder au tableau de bord
+              administratif
             </CardDescription>
           </div>
         </CardHeader>
@@ -144,7 +164,8 @@ export function LoginPage() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+                  if (errors.email)
+                    setErrors((prev) => ({ ...prev, email: undefined }));
                 }}
                 required
                 disabled={isLoading}
@@ -153,7 +174,11 @@ export function LoginPage() {
                 aria-describedby={errors.email ? "email-error" : undefined}
               />
               {errors.email && (
-                <p id="email-error" className="text-sm text-destructive" role="alert">
+                <p
+                  id="email-error"
+                  className="text-sm text-destructive"
+                  role="alert"
+                >
                   {errors.email}
                 </p>
               )}
@@ -169,25 +194,43 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+                    if (errors.password)
+                      setErrors((prev) => ({ ...prev, password: undefined }));
                   }}
                   required
                   disabled={isLoading}
-                  className={cn("pr-10", errors.password && "border-destructive")}
+                  className={cn(
+                    "pr-10",
+                    errors.password && "border-destructive",
+                  )}
                   aria-invalid={errors.password ? "true" : "false"}
-                  aria-describedby={errors.password ? "password-error" : undefined}
+                  aria-describedby={
+                    errors.password ? "password-error" : undefined
+                  }
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  aria-label={
+                    showPassword
+                      ? "Masquer le mot de passe"
+                      : "Afficher le mot de passe"
+                  }
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
               {errors.password && (
-                <p id="password-error" className="text-sm text-destructive" role="alert">
+                <p
+                  id="password-error"
+                  className="text-sm text-destructive"
+                  role="alert"
+                >
                   {errors.password}
                 </p>
               )}
@@ -200,10 +243,15 @@ export function LoginPage() {
                     <Checkbox
                       id="remember"
                       checked={remember}
-                      onCheckedChange={(checked) => setRemember(checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        setRemember(checked as boolean)
+                      }
                       disabled={isLoading}
                     />
-                    <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
+                    <Label
+                      htmlFor="remember"
+                      className="text-sm font-normal cursor-pointer"
+                    >
                       Se souvenir de moi
                     </Label>
                   </div>
@@ -242,25 +290,40 @@ export function LoginPage() {
                     placeholder="000000"
                     value={twoFactorCode}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                      const value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6);
                       setTwoFactorCode(value);
                       if (errors.twoFactorCode) {
-                        setErrors((prev) => ({ ...prev, twoFactorCode: undefined }));
+                        setErrors((prev) => ({
+                          ...prev,
+                          twoFactorCode: undefined,
+                        }));
                       }
                     }}
                     required
                     disabled={isLoading}
-                    className={cn("text-center text-2xl tracking-widest", errors.twoFactorCode && "border-destructive")}
+                    className={cn(
+                      "text-center text-2xl tracking-widest",
+                      errors.twoFactorCode && "border-destructive",
+                    )}
                     aria-invalid={errors.twoFactorCode ? "true" : "false"}
-                    aria-describedby={errors.twoFactorCode ? "twoFactorCode-error" : undefined}
+                    aria-describedby={
+                      errors.twoFactorCode ? "twoFactorCode-error" : undefined
+                    }
                   />
                   {errors.twoFactorCode && (
-                    <p id="twoFactorCode-error" className="text-sm text-destructive" role="alert">
+                    <p
+                      id="twoFactorCode-error"
+                      className="text-sm text-destructive"
+                      role="alert"
+                    >
                       {errors.twoFactorCode}
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground text-center">
-                    Entrez le code à 6 chiffres depuis votre application d'authentification
+                    Entrez le code à 6 chiffres depuis votre application
+                    d'authentification
                   </p>
                 </div>
 

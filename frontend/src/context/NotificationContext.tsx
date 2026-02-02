@@ -16,14 +16,18 @@ export interface Notification {
 
 interface NotificationContextType {
   notifications: Notification[];
-  addNotification: (notification: Omit<Notification, "id" | "timestamp">) => void;
+  addNotification: (
+    notification: Omit<Notification, "id" | "timestamp">,
+  ) => void;
   removeNotification: (id: string) => void;
   clearAll: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined,
+);
 
 // Charger les notifications persistantes depuis localStorage
 const loadPersistentNotifications = (): Notification[] => {
@@ -41,7 +45,10 @@ const loadPersistentNotifications = (): Notification[] => {
 // Sauvegarder les notifications persistantes
 const savePersistentNotifications = (notifications: Notification[]) => {
   try {
-    localStorage.setItem("dashboard_notifications", JSON.stringify(notifications));
+    localStorage.setItem(
+      "dashboard_notifications",
+      JSON.stringify(notifications),
+    );
   } catch {
     // Ignore errors
   }
@@ -49,7 +56,7 @@ const savePersistentNotifications = (notifications: Notification[]) => {
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(() =>
-    loadPersistentNotifications()
+    loadPersistentNotifications(),
   );
 
   // Sauvegarder les notifications à chaque changement
@@ -57,7 +64,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     savePersistentNotifications(notifications);
   }, [notifications]);
 
-  const addNotification = (notification: Omit<Notification, "id" | "timestamp">) => {
+  const addNotification = (
+    notification: Omit<Notification, "id" | "timestamp">,
+  ) => {
     const id = Math.random().toString(36).substring(2, 9);
     const newNotification: Notification = {
       id,
@@ -87,7 +96,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const markAsRead = (id: string) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
   };
 
@@ -114,7 +123,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 export function useNotification() {
   const context = useContext(NotificationContext);
   if (context === undefined) {
-    throw new Error("useNotification must be used within a NotificationProvider");
+    throw new Error(
+      "useNotification must be used within a NotificationProvider",
+    );
   }
   return context;
 }

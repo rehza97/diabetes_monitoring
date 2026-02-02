@@ -11,10 +11,10 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
     const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-    
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
@@ -42,17 +42,30 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string, options?: RequestInit & { params?: Record<string, string | number | undefined> }): Promise<ApiResponse<T>> {
+  async get<T>(
+    endpoint: string,
+    options?: RequestInit & {
+      params?: Record<string, string | number | undefined>;
+    },
+  ): Promise<ApiResponse<T>> {
     const { params, ...init } = options ?? {};
-    const url = params && Object.keys(params).length
-      ? `${endpoint}?${new URLSearchParams(
-          Object.entries(params).filter(([, v]) => v != null) as [string, string][]
-        ).toString()}`
-      : endpoint;
+    const url =
+      params && Object.keys(params).length
+        ? `${endpoint}?${new URLSearchParams(
+            Object.entries(params).filter(([, v]) => v != null) as [
+              string,
+              string,
+            ][],
+          ).toString()}`
+        : endpoint;
     return this.request<T>(url, { ...init, method: "GET" });
   }
 
-  async post<T>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+  async post<T>(
+    endpoint: string,
+    data?: any,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: "POST",
@@ -60,7 +73,11 @@ class ApiClient {
     });
   }
 
-  async put<T>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+  async put<T>(
+    endpoint: string,
+    data?: any,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: "PUT",
@@ -68,7 +85,10 @@ class ApiClient {
     });
   }
 
-  async delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  async delete<T>(
+    endpoint: string,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: "DELETE" });
   }
 }

@@ -11,7 +11,9 @@ import { z } from "zod";
 const contactSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   email: z.string().email("Email invalide"),
-  message: z.string().min(10, "Le message doit contenir au moins 10 caractères"),
+  message: z
+    .string()
+    .min(10, "Le message doit contenir au moins 10 caractères"),
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
@@ -22,7 +24,9 @@ export function ContactForm() {
     email: "",
     message: "",
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof ContactFormData, string>>
+  >({});
   const [isLoading, setIsLoading] = useState(false);
   const { addNotification } = useNotification();
 
@@ -49,7 +53,8 @@ export function ContactForm() {
         const fieldErrors: Partial<Record<keyof ContactFormData, string>> = {};
         error.issues.forEach((err) => {
           if (err.path[0] !== undefined) {
-            fieldErrors[String(err.path[0]) as keyof ContactFormData] = err.message;
+            fieldErrors[String(err.path[0]) as keyof ContactFormData] =
+              err.message;
           }
         });
         setErrors(fieldErrors);
@@ -66,7 +71,7 @@ export function ContactForm() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -133,7 +138,11 @@ export function ContactForm() {
           aria-describedby={errors.message ? "message-error" : undefined}
         />
         {errors.message && (
-          <p id="message-error" className="text-sm text-destructive" role="alert">
+          <p
+            id="message-error"
+            className="text-sm text-destructive"
+            role="alert"
+          >
             {errors.message}
           </p>
         )}
