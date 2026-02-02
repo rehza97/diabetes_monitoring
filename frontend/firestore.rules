@@ -41,13 +41,24 @@ service cloud.firestore {
     
     function isAssignedNurse(patientId) {
       return isNurse() && 
-             resource.data.nurseId == request.auth.uid;
+             exists(/databases/$(database)/documents/patients/$(patientId)) &&
+             get(/databases/$(database)/documents/patients/$(patientId)).data.nurseId == request.auth.uid;
     }
     
     function canAccessPatient(patientId) {
       return isAdmin() || 
              (isDoctor() && resource.data.doctorId == request.auth.uid) ||
              (isNurse() && resource.data.nurseId == request.auth.uid);
+    }
+    
+    // Same as canAccessPatient but checks the patient document via get().
+    // Use for subcollection rules where resource is the subcollection doc (readings, notes, etc.).
+    function canAccessPatientById(patientId) {
+      return isAdmin() || 
+             (isDoctor() && exists(/databases/$(database)/documents/patients/$(patientId)) &&
+              get(/databases/$(database)/documents/patients/$(patientId)).data.doctorId == request.auth.uid) ||
+             (isNurse() && exists(/databases/$(database)/documents/patients/$(patientId)) &&
+              get(/databases/$(database)/documents/patients/$(patientId)).data.nurseId == request.auth.uid);
     }
     
     // Users Collection
@@ -71,18 +82,18 @@ service cloud.firestore {
       
       allow create: if isAuthenticated() && (
         isAdmin() || 
-        // Allow users to create their own document if it doesn't exist
+        // Allow users to create their own document if it doesn't exist (doctor/nurse only; admin via script/CF)
         (isOwner(userId) && 
          !exists(/databases/$(database)/documents/users/$(userId)) &&
          request.resource.data.id == userId &&
-         request.resource.data.role in ['admin', 'doctor', 'nurse'] &&
+         request.resource.data.role in ['doctor', 'nurse'] &&
          request.resource.data.isActive == true
         )
       );
       
       allow update: if isAuthenticated() && (
         isAdmin() || 
-        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'avatar', 'phone', 'lastLogin']))
+        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'avatar', 'phone', 'lastLogin', 'firstName', 'lastName', 'updatedAt']))
       );
       
       allow delete: if isAdmin();
@@ -125,11 +136,10 @@ service cloud.firestore {
       
       // Readings Subcollection
       match /readings/{readingId} {
-        allow read: if canAccessPatient(patientId);
+        allow read: if canAccessPatientById(patientId);
         allow create: if isAuthenticated() && (
           isAdmin() || 
-          isAssignedDoctor(patientId) || 
-          isAssignedNurse(patientId)
+          canAccessPatientById(patientId)
         );
         allow update: if isAuthenticated() && (
           isAdmin() || 
@@ -141,7 +151,7 @@ service cloud.firestore {
       
       // Medical Notes Subcollection
       match /medicalNotes/{noteId} {
-        allow read: if canAccessPatient(patientId);
+        allow read: if canAccessPatientById(patientId);
         allow create: if isAuthenticated() && (
           isAdmin() || 
           isAssignedDoctor(patientId)
@@ -155,7 +165,7 @@ service cloud.firestore {
       
       // Medications Subcollection
       match /medications/{medicationId} {
-        allow read: if canAccessPatient(patientId);
+        allow read: if canAccessPatientById(patientId);
         allow create: if isAuthenticated() && (
           isAdmin() || 
           isAssignedDoctor(patientId)
@@ -169,7 +179,7 @@ service cloud.firestore {
       
       // Scheduled Readings Subcollection
       match /scheduledReadings/{scheduledId} {
-        allow read: if canAccessPatient(patientId);
+        allow read: if canAccessPatientById(patientId);
         allow create: if isAuthenticated() && (
           isAdmin() || 
           isAssignedDoctor(patientId) || 
@@ -185,7 +195,7 @@ service cloud.firestore {
       
       // Documents Subcollection
       match /documents/{documentId} {
-        allow read: if canAccessPatient(patientId);
+        allow read: if canAccessPatientById(patientId);
         allow create: if isAuthenticated() && (
           isAdmin() || 
           isAssignedDoctor(patientId)
@@ -199,7 +209,7 @@ service cloud.firestore {
       
       // Alerts Subcollection
       match /alerts/{alertId} {
-        allow read: if canAccessPatient(patientId);
+        allow read: if canAccessPatientById(patientId);
         allow create: if isAuthenticated(); // System and authenticated users can create alerts
         allow update: if isAuthenticated() && (
           isAdmin() || 
@@ -267,6 +277,14 @@ service cloud.firestore {
       allow delete: if isAdmin() || 
                        resource.data.senderId == request.auth.uid || 
                        resource.data.recipientId == request.auth.uid;
+    }
+    
+    // Reading Templates Collection
+    match /readingTemplates/{templateId} {
+      allow read: if isAuthenticated();
+      allow create: if isDoctor() || isAdmin();
+      allow update, delete: if isAdmin() || 
+        (isAuthenticated() && resource.data.createdById == request.auth.uid);
     }
     
     // System Health Collection

@@ -311,9 +311,11 @@ export interface FirestoreAuditLog {
   id: string;
   userId: string; // DocumentReference to users
   userName?: string; // denormalized
+  userRole?: string; // denormalized
   action: AuditAction;
   entityType: AuditEntityType;
   entityId: string;
+  entityName?: string; // denormalized display name
   oldData?: object;
   newData?: object;
   ipAddress?: string;

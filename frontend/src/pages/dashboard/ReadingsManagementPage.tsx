@@ -597,9 +597,9 @@ export function ReadingsManagementPage() {
     try {
       logInfo("exportReadings", "Exporting readings", { format, count: filteredReadings.length });
       if (format === "excel") {
-        exportReadingsToExcel(filteredReadings);
+        exportReadingsToExcel(filteredReadings as unknown as Parameters<typeof exportReadingsToExcel>[0]);
       } else {
-        exportReadingsToCSV(filteredReadings);
+        exportReadingsToCSV(filteredReadings as unknown as Parameters<typeof exportReadingsToCSV>[0]);
       }
       logInfo("exportReadings", "Export completed successfully", { format });
       addNotification({

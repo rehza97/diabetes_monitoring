@@ -304,7 +304,7 @@ export function DashboardPage() {
       const userRole = log.userRole || "Utilisateur";
       
       let action = "";
-      let type: "reading" | "patient_added" | "user" | "other" = "other";
+      let type: "report" | "other" | "reading" | "login" | "patient_added" | "notification" = "other";
       
       if (log.action === "create" && log.entityType === "reading") {
         action = "a enregistré une nouvelle mesure";
@@ -314,7 +314,7 @@ export function DashboardPage() {
         type = "patient_added";
       } else if (log.action === "create" && log.entityType === "user") {
         action = "a créé un nouvel utilisateur";
-        type = "user";
+        type = "other";
       } else {
         action = `${log.action} ${log.entityType}`;
       }

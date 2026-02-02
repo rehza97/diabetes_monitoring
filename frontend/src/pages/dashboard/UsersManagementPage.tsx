@@ -411,7 +411,7 @@ export function UsersManagementPage() {
           isActive: u.is_active,
           createdAt: undefined,
           lastLogin: undefined,
-        })));
+        })) as unknown as Parameters<typeof exportUsersToExcel>[0]);
       } else {
         exportUsersToCSV(filteredUsers.map(u => ({
           id: u.id,
@@ -423,7 +423,7 @@ export function UsersManagementPage() {
           isActive: u.is_active,
           createdAt: undefined,
           lastLogin: undefined,
-        })));
+        })) as unknown as Parameters<typeof exportUsersToCSV>[0]);
       }
       logInfo("exportUsers", "Export completed successfully", { format });
       addNotification({

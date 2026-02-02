@@ -216,11 +216,11 @@ export function PatientsManagementPage() {
     setIsFormOpen(true);
   };
 
-  const handleViewPatient = (patient: FirestorePatient) => {
+  const handleViewPatient = (patient: { id: string }) => {
     navigate(`/dashboard/patients/${patient.id}`);
   };
 
-  const handleEditPatient = (patient: { id: string } & Partial<FirestorePatient>) => {
+  const handleEditPatient = (patient: { id: string }) => {
     logInfo("handleEditPatient", "Starting edit patient", { patientId: patient.id });
     
     // Find the original FirestorePatient from the patients array
@@ -277,23 +277,24 @@ export function PatientsManagementPage() {
     setIsFormOpen(true);
   };
 
-  const handleDeletePatient = async (patient: FirestorePatient) => {
+  const handleDeletePatient = async (patient: { id: string; first_name?: string; last_name?: string }) => {
+    const name = patient.first_name && patient.last_name ? `${patient.first_name} ${patient.last_name}` : "ce patient";
     if (
       !confirm(
-        `Êtes-vous sûr de vouloir supprimer ${patient.firstName} ${patient.lastName} ?`
+        `Êtes-vous sûr de vouloir supprimer ${name} ?`
       )
     ) {
       return;
     }
     
     try {
-      logInfo("deletePatient", "Deleting patient", { patientId: patient.id, patientName: `${patient.firstName} ${patient.lastName}` });
+      logInfo("deletePatient", "Deleting patient", { patientId: patient.id, patientName: name });
       await deletePatient(patient.id);
       logInfo("deletePatient", "Patient deleted successfully", { patientId: patient.id });
       addNotification({
         type: "success",
         title: "Patient supprimé",
-        message: `${patient.firstName} ${patient.lastName} a été supprimé.`,
+        message: `${name} a été supprimé.`,
       });
     } catch (error) {
       logError("deletePatient", error, { patientId: patient.id });
@@ -360,13 +361,13 @@ export function PatientsManagementPage() {
         await createPatient({
           firstName,
           lastName,
-          dateOfBirth: dateOfBirth ? Timestamp.fromDate(new Date(dateOfBirth)) : undefined,
+          dateOfBirth: dateOfBirth ? Timestamp.fromDate(new Date(dateOfBirth)) : Timestamp.now(),
           gender,
           phone,
           email,
           address,
           diabetesType,
-          diagnosisDate: diagnosisDate ? Timestamp.fromDate(new Date(diagnosisDate)) : undefined,
+          diagnosisDate: diagnosisDate ? Timestamp.fromDate(new Date(diagnosisDate)) : Timestamp.now(),
           bloodType,
           weight,
           height,

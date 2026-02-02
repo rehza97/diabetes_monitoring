@@ -88,7 +88,7 @@ export const messagesCollection = collection(db, "messages").withConverter(
 export async function getUser(userId: string): Promise<FirestoreUser | null> {
   const docRef = doc(usersCollection, userId);
   const docSnap = await getDoc(docRef);
-  return docSnap.exists() ? docSnap.data() : null;
+  return docSnap.exists() ? (docSnap.data() as FirestoreUser) : null;
 }
 
 export async function createUser(
@@ -217,7 +217,7 @@ export async function getPatient(
 ): Promise<FirestorePatient | null> {
   const docRef = getPatientRef(patientId);
   const docSnap = await getDoc(docRef);
-  return docSnap.exists() ? docSnap.data() : null;
+  return docSnap.exists() ? (docSnap.data() as FirestorePatient) : null;
 }
 
 export async function createPatient(
@@ -240,7 +240,7 @@ export async function createPatient(
     status: "active",
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
 }
 
@@ -293,10 +293,9 @@ export async function createReading(
 ): Promise<string> {
   const readingsCollection = getReadingsCollection(patientId);
   const docRef = doc(readingsCollection);
-  
-  // Calculate status based on value
-  const status = calculateReadingStatus(data.value, data.unit);
-  
+  const thresholds = await getMeasurementThresholds();
+  const status = calculateReadingStatus(data.value, data.unit, thresholds);
+
   await setDoc(docRef, {
     ...data,
     recordedById,
@@ -305,7 +304,7 @@ export async function createReading(
     isVerified: false,
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   
   // Update patient's last reading info (denormalization)
   await updatePatient(patientId, {
@@ -339,12 +338,12 @@ export async function updateReading(
   const readingsCollection = getReadingsCollection(patientId);
   const docRef = doc(readingsCollection, readingId);
   
-  // Recalculate status if value changed
   const updateData: any = { ...data };
   if (data.value !== undefined && data.unit) {
-    updateData.status = calculateReadingStatus(data.value, data.unit);
+    const thresholds = await getMeasurementThresholds();
+    updateData.status = calculateReadingStatus(data.value, data.unit, thresholds);
   }
-  
+
   await updateDoc(docRef, {
     ...updateData,
     updatedAt: serverTimestamp(),
@@ -400,17 +399,14 @@ export async function queryAllReadings(
 
 function calculateReadingStatus(
   value: number,
-  unit: "mg/dL" | "mmol/L"
+  unit: "mg/dL" | "mmol/L",
+  thresholds?: MeasurementThresholds
 ): "normal" | "warning" | "critical" {
-  // Convert to mg/dL for comparison
   const valueInMgDl = unit === "mmol/L" ? value * 18.0182 : value;
-  
-  if (valueInMgDl < 70 || valueInMgDl > 250) {
-    return "critical";
-  } else if (valueInMgDl < 100 || valueInMgDl > 180) {
-    return "warning";
-  }
-  return "normal";
+  const t = thresholds ?? DEFAULT_THRESHOLDS;
+  if (valueInMgDl < t.critical_min || valueInMgDl > t.critical_max) return "critical";
+  if (valueInMgDl >= t.normal_min && valueInMgDl <= t.normal_max) return "normal";
+  return "warning";
 }
 
 // Medical Notes Helpers
@@ -436,8 +432,30 @@ export async function createMedicalNote(
     isImportant: data.isImportant ?? false,
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
+}
+
+export async function updateMedicalNote(
+  patientId: string,
+  noteId: string,
+  data: Partial<CreateFirestoreMedicalNoteDto>
+): Promise<void> {
+  const notesCollection = getMedicalNotesCollection(patientId);
+  const docRef = doc(notesCollection, noteId);
+  await updateDoc(docRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteMedicalNote(
+  patientId: string,
+  noteId: string
+): Promise<void> {
+  const notesCollection = getMedicalNotesCollection(patientId);
+  const docRef = doc(notesCollection, noteId);
+  await deleteDoc(docRef);
 }
 
 // Medications Helpers
@@ -465,8 +483,34 @@ export async function createMedication(
     isActive,
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
+}
+
+export async function updateMedication(
+  patientId: string,
+  medicationId: string,
+  data: Partial<CreateFirestoreMedicationDto>
+): Promise<void> {
+  const medicationsCollection = getMedicationsCollection(patientId);
+  const docRef = doc(medicationsCollection, medicationId);
+  const updateData: any = { ...data };
+  if (data.endDate !== undefined) {
+    updateData.isActive = !data.endDate || data.endDate.toMillis() > Date.now();
+  }
+  await updateDoc(docRef, {
+    ...updateData,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteMedication(
+  patientId: string,
+  medicationId: string
+): Promise<void> {
+  const medicationsCollection = getMedicationsCollection(patientId);
+  const docRef = doc(medicationsCollection, medicationId);
+  await deleteDoc(docRef);
 }
 
 // Scheduled Readings Helpers
@@ -489,8 +533,30 @@ export async function createScheduledReading(
     reminderSent: false,
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
+}
+
+export async function updateScheduledReading(
+  patientId: string,
+  scheduledReadingId: string,
+  data: Partial<CreateFirestoreScheduledReadingDto & { status?: string }>
+): Promise<void> {
+  const scheduledCollection = getScheduledReadingsCollection(patientId);
+  const docRef = doc(scheduledCollection, scheduledReadingId);
+  await updateDoc(docRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteScheduledReading(
+  patientId: string,
+  scheduledReadingId: string
+): Promise<void> {
+  const scheduledCollection = getScheduledReadingsCollection(patientId);
+  const docRef = doc(scheduledCollection, scheduledReadingId);
+  await deleteDoc(docRef);
 }
 
 // Notifications Helpers (User Subcollection)
@@ -512,7 +578,7 @@ export async function createNotification(
     isRead: false,
     priority: data.priority ?? "medium",
     createdAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
 }
 
@@ -562,7 +628,7 @@ export async function getReport(
 ): Promise<FirestoreReport | null> {
   const docRef = getReportRef(reportId);
   const docSnap = await getDoc(docRef);
-  return docSnap.exists() ? docSnap.data() : null;
+  return docSnap.exists() ? (docSnap.data() as FirestoreReport) : null;
 }
 
 export async function createReport(
@@ -576,7 +642,7 @@ export async function createReport(
     isScheduled: data.isScheduled ?? false,
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
 }
 
@@ -618,7 +684,7 @@ export async function createMessage(
     isRead: false,
     priority: data.priority ?? "medium",
     createdAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
 }
 
@@ -669,8 +735,49 @@ export async function createSetting(
     ...data,
     updatedById: createdById,
     updatedAt: serverTimestamp(),
-  });
+  } as DocumentData);
   return docRef.id;
+}
+
+export interface MeasurementThresholds {
+  normal_min: number;
+  normal_max: number;
+  warning_min: number;
+  warning_max: number;
+  critical_min: number;
+  critical_max: number;
+}
+
+const DEFAULT_THRESHOLDS: MeasurementThresholds = {
+  normal_min: 70,
+  normal_max: 140,
+  warning_min: 140,
+  warning_max: 180,
+  critical_min: 70,
+  critical_max: 250,
+};
+
+function toNum(v: unknown): number {
+  if (typeof v === "number" && !isNaN(v)) return v;
+  const n = Number(v);
+  return typeof n === "number" && !isNaN(n) ? n : 0;
+}
+
+export async function getMeasurementThresholds(): Promise<MeasurementThresholds> {
+  try {
+    const rows = await getSettingsByCategory("measurements");
+    const m = new Map(rows.map((s) => [s.key, s.value]));
+    return {
+      normal_min: toNum(m.get("measurements.normal_min")) || DEFAULT_THRESHOLDS.normal_min,
+      normal_max: toNum(m.get("measurements.normal_max")) || DEFAULT_THRESHOLDS.normal_max,
+      warning_min: toNum(m.get("measurements.warning_min")) || DEFAULT_THRESHOLDS.warning_min,
+      warning_max: toNum(m.get("measurements.warning_max")) || DEFAULT_THRESHOLDS.warning_max,
+      critical_min: toNum(m.get("measurements.critical_min")) || DEFAULT_THRESHOLDS.critical_min,
+      critical_max: toNum(m.get("measurements.critical_max")) || DEFAULT_THRESHOLDS.critical_max,
+    };
+  } catch {
+    return { ...DEFAULT_THRESHOLDS };
+  }
 }
 
 // Patient Documents Helpers
@@ -699,7 +806,7 @@ export async function createPatientDocument(
     ...data,
     uploadedById,
     createdAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
 }
 
@@ -746,7 +853,7 @@ export async function createReadingTemplate(
     isDefault: data.isDefault ?? false,
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
 }
 
@@ -770,7 +877,7 @@ export async function createPatientAlert(
     acknowledgedBy: [],
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
-  });
+  } as DocumentData);
   return docRef.id;
 }
 

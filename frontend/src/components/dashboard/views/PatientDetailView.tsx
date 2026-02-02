@@ -43,6 +43,9 @@ import { useRealtimeAuditLogs } from "@/hooks/useRealtime";
 import { auditLogsCollection, getPatientDocuments, createPatientDocument } from "@/lib/firestore-helpers";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useNotification } from "@/context/NotificationContext";
+import { MedicalNoteForm } from "@/components/dashboard/forms/MedicalNoteForm";
+import { MedicationForm } from "@/components/dashboard/forms/MedicationForm";
+import { createMedicalNote, updateMedicalNote, deleteMedicalNote, createMedication, updateMedication, deleteMedication } from "@/lib/firestore-helpers";
 import {
   Dialog,
   DialogContent,
@@ -64,7 +67,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { query, where, orderBy, limit } from "firebase/firestore";
 import { useUsers } from "@/hooks/useFirestore";
 import { usersCollection } from "@/lib/firestore-helpers";
-import type { FirestorePatient, FirestoreUser } from "@/types/firestore";
+import type { FirestorePatient, FirestoreUser, FirestoreMedicalNote, FirestoreMedication, MedicalNoteType } from "@/types/firestore";
 
 const diabetesTypeLabels = {
   type1: "Type 1",
@@ -72,10 +75,11 @@ const diabetesTypeLabels = {
   gestational: "Gestationnel",
 };
 
-const noteTypeLabels = {
-  diagnostic: "Diagnostic",
-  prescription: "Prescription",
+const noteTypeLabels: Record<string, string> = {
+  diagnosis: "Diagnostic",
+  prescription: "Ordonnance",
   observation: "Observation",
+  followup: "Suivi",
 };
 
 // Debug logging utility
@@ -182,6 +186,157 @@ export function PatientDetailView() {
     debugLog("usersMap built", { mapSize: map.size });
     return map;
   }, [users]);
+
+  // Medical Note Form State
+  const [medicalNoteFormOpen, setMedicalNoteFormOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<FirestoreMedicalNote | null>(null);
+  
+  // Medication Form State
+  const [medicationFormOpen, setMedicationFormOpen] = useState(false);
+  const [editingMedication, setEditingMedication] = useState<FirestoreMedication | null>(null);
+  
+  const { addNotification } = useNotification();
+  const { user: currentUser } = useAuth();
+
+  const handleMedicalNoteSubmit = async (data: {
+    noteType: string;
+    content: string;
+    isImportant?: boolean;
+    tags?: string[];
+  }) => {
+    if (!patient?.id || !currentUser?.id) return;
+
+    try {
+      if (editingNote) {
+        await updateMedicalNote(patient.id, editingNote.id, { ...data, noteType: data.noteType as MedicalNoteType });
+        addNotification({
+          type: "success",
+          title: "Note modifiée",
+          message: "La note médicale a été modifiée avec succès.",
+        });
+      } else {
+        const doctorName = currentUser.first_name && currentUser.last_name
+          ? `${currentUser.first_name} ${currentUser.last_name}`.trim()
+          : undefined;
+        await createMedicalNote(patient.id, { ...data, noteType: data.noteType as MedicalNoteType }, currentUser.id, doctorName);
+        addNotification({
+          type: "success",
+          title: "Note créée",
+          message: "La note médicale a été créée avec succès.",
+        });
+      }
+      setMedicalNoteFormOpen(false);
+      setEditingNote(null);
+    } catch (error: any) {
+      console.error("Error saving medical note:", error);
+      addNotification({
+        type: "error",
+        title: "Erreur",
+        message: error?.message || "Une erreur est survenue lors de l'enregistrement de la note.",
+      });
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!patient?.id) return;
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette note ?")) return;
+
+    try {
+      await deleteMedicalNote(patient.id, noteId);
+      addNotification({
+        type: "success",
+        title: "Note supprimée",
+        message: "La note médicale a été supprimée avec succès.",
+      });
+    } catch (error: any) {
+      console.error("Error deleting medical note:", error);
+      addNotification({
+        type: "error",
+        title: "Erreur",
+        message: error?.message || "Une erreur est survenue lors de la suppression de la note.",
+      });
+    }
+  };
+
+  const handleMedicationSubmit = async (data: {
+    medicationName: string;
+    dosage: string;
+    frequency: string;
+    startDate: string;
+    endDate?: string;
+    notes?: string;
+  }) => {
+    if (!patient?.id || !currentUser?.id) return;
+
+    try {
+      const { Timestamp } = await import("firebase/firestore");
+      const startDateTimestamp = Timestamp.fromDate(new Date(data.startDate));
+      const endDateTimestamp = data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : undefined;
+
+      if (editingMedication) {
+        await updateMedication(patient.id, editingMedication.id, {
+          medicationName: data.medicationName,
+          dosage: data.dosage,
+          frequency: data.frequency,
+          startDate: startDateTimestamp,
+          endDate: endDateTimestamp,
+          notes: data.notes || undefined,
+        });
+        addNotification({
+          type: "success",
+          title: "Médicament modifié",
+          message: "Le médicament a été modifié avec succès.",
+        });
+      } else {
+        const doctorName = currentUser.first_name && currentUser.last_name
+          ? `${currentUser.first_name} ${currentUser.last_name}`.trim()
+          : undefined;
+        await createMedication(patient.id, {
+          medicationName: data.medicationName,
+          dosage: data.dosage,
+          frequency: data.frequency,
+          startDate: startDateTimestamp,
+          endDate: endDateTimestamp,
+          notes: data.notes || undefined,
+        }, currentUser.id, doctorName);
+        addNotification({
+          type: "success",
+          title: "Médicament prescrit",
+          message: "Le médicament a été prescrit avec succès.",
+        });
+      }
+      setMedicationFormOpen(false);
+      setEditingMedication(null);
+    } catch (error: any) {
+      console.error("Error saving medication:", error);
+      addNotification({
+        type: "error",
+        title: "Erreur",
+        message: error?.message || "Une erreur est survenue lors de l'enregistrement du médicament.",
+      });
+    }
+  };
+
+  const handleDeleteMedication = async (medicationId: string) => {
+    if (!patient?.id) return;
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce médicament ?")) return;
+
+    try {
+      await deleteMedication(patient.id, medicationId);
+      addNotification({
+        type: "success",
+        title: "Médicament supprimé",
+        message: "Le médicament a été supprimé avec succès.",
+      });
+    } catch (error: any) {
+      console.error("Error deleting medication:", error);
+      addNotification({
+        type: "error",
+        title: "Erreur",
+        message: error?.message || "Une erreur est survenue lors de la suppression du médicament.",
+      });
+    }
+  };
   
   // Fetch audit logs for this patient
   const auditLogsQuery = useMemo(() => {
@@ -518,7 +673,9 @@ export function PatientDetailView() {
               const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
               const monthlyCount = readingsList.filter(r => {
                 if (!r.date) return false;
-                const readingDate = r.date.toDate ? r.date.toDate() : new Date(r.date);
+                const readingDate = r.date && typeof (r.date as { toDate?: () => Date }).toDate === "function"
+                  ? (r.date as { toDate: () => Date }).toDate()
+                  : new Date(r.date as unknown as string | number | Date);
                 return readingDate >= currentMonthStart;
               }).length;
               
@@ -669,55 +826,191 @@ export function PatientDetailView() {
           <TabsContent value="medications" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Médicaments prescrits</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Médicaments prescrits</CardTitle>
+                  <Button
+                    onClick={() => {
+                      setEditingMedication(null);
+                      setMedicationFormOpen(true);
+                    }}
+                    size="sm"
+                  >
+                    <Pill className="mr-2 h-4 w-4" />
+                    Prescrire un médicament
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <DataTable
-                  columns={[
-                    { header: "Médicament", accessor: "name" },
-                    { header: "Dosage", accessor: "dosage" },
-                    { header: "Fréquence", accessor: "frequency" },
-                    { header: "Date début", accessor: "start_date" },
-                    { header: "Date fin", accessor: "end_date" },
-                  ]}
-                  data={(medications || []).map((med) => ({
-                    name: med.medicationName,
-                    dosage: med.dosage,
-                    frequency: med.frequency,
-                    start_date: med.startDate ? formatDate(med.startDate.toDate().toISOString().split("T")[0]) : "N/A",
-                    end_date: med.endDate ? formatDate(med.endDate.toDate().toISOString().split("T")[0]) : "En cours",
-                  }))}
-                />
+                {medications && medications.length > 0 ? (
+                  <div className="space-y-4">
+                    {medications.map((med) => {
+                      const doctor = med.prescribedById ? usersMap.get(med.prescribedById) : undefined;
+                      const doctorName = doctor ? `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim() : med.prescribedByName || "Médecin inconnu";
+                      return (
+                        <div key={med.id} className="border rounded-lg p-4 space-y-2 relative group">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-semibold">{med.medicationName}</h4>
+                                {med.isActive && (
+                                  <Badge variant="secondary" className="text-xs">Actif</Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {med.dosage} · {med.frequency}
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Du {formatDate(med.startDate.toDate().toISOString().split("T")[0])}
+                                {med.endDate ? ` au ${formatDate(med.endDate.toDate().toISOString().split("T")[0])}` : " (en cours)"}
+                              </p>
+                              {med.notes && (
+                                <p className="text-sm mt-2">{med.notes}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-2">Prescrit par {doctorName}</p>
+                            </div>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  setEditingMedication(med);
+                                  setMedicationFormOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => handleDeleteMedication(med.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={Pill}
+                    title="Aucun médicament prescrit"
+                    description="Aucun médicament n'a été prescrit pour ce patient."
+                  />
+                )}
               </CardContent>
             </Card>
+            <MedicationForm
+              medication={editingMedication ? {
+                id: editingMedication.id,
+                medicationName: editingMedication.medicationName,
+                dosage: editingMedication.dosage,
+                frequency: editingMedication.frequency,
+                startDate: editingMedication.startDate,
+                endDate: editingMedication.endDate,
+                notes: editingMedication.notes,
+              } : undefined}
+              isOpen={medicationFormOpen}
+              onClose={() => {
+                setMedicationFormOpen(false);
+                setEditingMedication(null);
+              }}
+              onSubmit={handleMedicationSubmit}
+            />
           </TabsContent>
 
           <TabsContent value="notes" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Notes médicales</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Notes médicales</CardTitle>
+                  <Button
+                    onClick={() => {
+                      setEditingNote(null);
+                      setMedicalNoteFormOpen(true);
+                    }}
+                    size="sm"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Ajouter une note
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {(medicalNotes || []).map((note) => {
-                    const doctor = note.doctorId ? usersMap.get(note.doctorId) : undefined;
-                    const doctorName = doctor ? `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim() : note.doctorName || "Médecin inconnu";
-                    return (
-                      <div key={note.id} className="border-l-4 border-primary pl-4 py-2">
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge variant="outline">{noteTypeLabels[note.noteType]}</Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {formatDateTime(note.createdAt?.toDate().toISOString() || "")}
-                          </span>
+                  {medicalNotes && medicalNotes.length > 0 ? (
+                    medicalNotes.map((note) => {
+                      const doctor = note.doctorId ? usersMap.get(note.doctorId) : undefined;
+                      const doctorName = doctor ? `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim() : note.doctorName || "Médecin inconnu";
+                      return (
+                        <div key={note.id} className="border-l-4 border-primary pl-4 py-2 relative group">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{noteTypeLabels[note.noteType]}</Badge>
+                              {note.isImportant && (
+                                <Badge variant="secondary" className="text-xs">Important</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">
+                                {formatDateTime(note.createdAt?.toDate().toISOString() || "")}
+                              </span>
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setEditingNote(note);
+                                    setMedicalNoteFormOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive"
+                                  onClick={() => handleDeleteNote(note.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="font-medium mb-1">{note.content}</p>
+                          <p className="text-sm text-muted-foreground">Par {doctorName}</p>
                         </div>
-                        <p className="font-medium mb-1">{note.content}</p>
-                        <p className="text-sm text-muted-foreground">Par {doctorName}</p>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  ) : (
+                    <EmptyState
+                      icon={FileText}
+                      title="Aucune note médicale"
+                      description="Aucune note médicale n'a été enregistrée pour ce patient."
+                    />
+                  )}
                 </div>
               </CardContent>
             </Card>
+            <MedicalNoteForm
+              note={editingNote ? {
+                id: editingNote.id,
+                noteType: editingNote.noteType,
+                content: editingNote.content,
+                isImportant: editingNote.isImportant,
+                tags: editingNote.tags,
+              } : undefined}
+              isOpen={medicalNoteFormOpen}
+              onClose={() => {
+                setMedicalNoteFormOpen(false);
+                setEditingNote(null);
+              }}
+              onSubmit={handleMedicalNoteSubmit}
+            />
           </TabsContent>
 
           <TabsContent value="nurse" className="space-y-4">
@@ -819,7 +1112,7 @@ function PatientDocumentsSection({
   };
 
   const handleUpload = async () => {
-    if (!file || !currentUser?.uid) {
+    if (!file || !currentUser?.id) {
       addNotification({
         type: "error",
         title: "Erreur",
@@ -844,7 +1137,7 @@ function PatientDocumentsSection({
           category,
           description: description || undefined,
         },
-        currentUser.uid
+        currentUser.id
       );
 
       addNotification({
@@ -985,7 +1278,7 @@ function PatientDocumentsSection({
             ]}
             data={documents.map((doc) => ({
               file_name: doc.fileName || "Document",
-              category: categoryLabels[doc.category || "other"] || "Autre",
+              category: (categoryLabels as Record<string, string>)[doc.category || "other"] || "Autre",
               size: doc.fileSize ? `${(doc.fileSize / 1024).toFixed(2)} KB` : "N/A",
               date: doc.createdAt ? formatDate(doc.createdAt.toDate().toISOString()) : "N/A",
               actions: (

@@ -80,12 +80,13 @@ export function NotificationsPage() {
     
     return notifications.map((notif) => {
       // Map Firestore notification type to UI type
+      const typeStr = notif.type as string;
       let uiType: "system" | "security" | "error" | "update" = "system";
-      if (notif.type === "security" || notif.type === "critical") {
+      if (typeStr === "security" || typeStr === "critical" || notif.type === "critical_reading") {
         uiType = "security";
-      } else if (notif.type === "error" || notif.type === "warning") {
+      } else if (typeStr === "error" || typeStr === "warning") {
         uiType = "error";
-      } else if (notif.type === "update" || notif.type === "info") {
+      } else if (typeStr === "update" || typeStr === "info" || notif.type === "reminder" || notif.type === "message") {
         uiType = "update";
       }
       
@@ -93,7 +94,7 @@ export function NotificationsPage() {
         id: notif.id,
         type: uiType,
         title: notif.title || "Notification",
-        message: notif.message || notif.body || "",
+        message: notif.message || "",
         is_read: notif.isRead || false,
         created_at: notif.createdAt?.toDate().toISOString() || new Date().toISOString(),
         firestoreNotification: notif, // Keep reference for updates

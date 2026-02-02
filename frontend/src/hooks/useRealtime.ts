@@ -12,6 +12,7 @@ import {
   type QueryDocumentSnapshot,
   type Unsubscribe,
   type DocumentReference,
+  type QueryConstraint,
 } from "firebase/firestore";
 import {
   usersCollection,
@@ -371,7 +372,7 @@ export function useRealtimeMessages(
           if (options?.limitCount) {
             constraints.push(limit(options.limitCount));
           }
-          return query(messagesCollection, ...constraints) as Query<FirestoreMessage>;
+          return query(messagesCollection, ...(constraints as QueryConstraint[])) as Query<FirestoreMessage>;
         })()
       : null;
 
@@ -395,7 +396,7 @@ export function useRealtimeMedicalNotes(
       return null;
     }
     const collection = getMedicalNotesCollection(patientId);
-    const constraints = [orderBy("createdAt", "desc")];
+    const constraints: QueryConstraint[] = [orderBy("createdAt", "desc")];
     if (options?.limitCount) {
       constraints.push(limit(options.limitCount));
     }
@@ -533,24 +534,24 @@ export function useRealtimeSubscription() {
       unsubscribe(key);
 
       const unsubscribeFn = onSnapshot(
-        queryOrDoc,
-        (snapshot) => {
-          if ("exists" in snapshot) {
-            // Document snapshot
-            const data = snapshot.exists()
-              ? ({ id: snapshot.id, ...snapshot.data() } as T)
+        queryOrDoc as any,
+        (snapshot: { exists: () => boolean; id: string; data: () => unknown } | { docs: { id: string; data: () => unknown }[] }) => {
+          if ("exists" in snapshot && typeof snapshot.exists === "function") {
+            const snap = snapshot as { exists: () => boolean; id: string; data: () => unknown };
+            const data = snap.exists()
+              ? ({ id: snap.id, ...(typeof snap.data() === "object" && snap.data() !== null ? snap.data() as object : {}) } as T)
               : null;
             onNext(data);
           } else {
-            // Query snapshot
-            const data = snapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            })) as T[];
+            const snap = snapshot as { docs: { id: string; data: () => unknown }[] };
+            const data = snap.docs.map((d: { id: string; data: () => unknown }) => {
+              const raw = d.data();
+              return { id: d.id, ...(typeof raw === "object" && raw !== null ? raw as object : {}) };
+            }) as T[];
             onNext(data);
           }
         },
-        (err) => {
+        (err: unknown) => {
           const error = err instanceof Error ? err : new Error(String(err));
           onError?.(error);
         }

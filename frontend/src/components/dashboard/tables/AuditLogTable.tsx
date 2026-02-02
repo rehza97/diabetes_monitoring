@@ -38,8 +38,8 @@ interface AuditLog {
     name: string;
     email: string;
   };
-  action: "create" | "update" | "delete" | "view";
-  entity_type: "patient" | "reading" | "user" | "report";
+  action: string;
+  entity_type: string;
   entity_id: string;
   old_data?: Record<string, any>;
   new_data?: Record<string, any>;
@@ -54,25 +54,34 @@ interface AuditLogTableProps {
   onExport?: () => void;
 }
 
-const actionLabels = {
+const actionLabels: Record<string, string> = {
   create: "Création",
   update: "Modification",
   delete: "Suppression",
   view: "Consultation",
+  export: "Export",
+  login: "Connexion",
+  logout: "Déconnexion",
 };
 
-const actionColors = {
+const actionColors: Record<string, string> = {
   create: "bg-success/10 text-success",
   update: "bg-primary/10 text-primary",
   delete: "bg-destructive/10 text-destructive",
   view: "bg-muted text-muted-foreground",
+  export: "bg-muted text-muted-foreground",
+  login: "bg-muted text-muted-foreground",
+  logout: "bg-muted text-muted-foreground",
 };
 
-const entityTypeLabels = {
+const entityTypeLabels: Record<string, string> = {
   patient: "Patient",
   reading: "Mesure",
   user: "Utilisateur",
   report: "Rapport",
+  medication: "Médicament",
+  note: "Note",
+  settings: "Paramètres",
 };
 
 export function AuditLogTable({

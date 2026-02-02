@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -74,7 +74,7 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
         message: "Les mots de passe ne correspondent pas",
         path: ["confirmPassword"],
       })
-    ),
+    ) as Resolver<UserFormData>,
     defaultValues: user
       ? {
           first_name: user.first_name,
@@ -163,7 +163,7 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onFormSubmit as SubmitHandler<UserFormData>)} className="space-y-4">
           {/* Avatar Upload */}
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20">

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { auth } from "@/lib/firebase";
 import { getSettingsByCategory, updateSetting, createSetting } from "@/lib/firestore-helpers";
 import type { FirestoreSetting } from "@/types/firestore";
 
@@ -32,8 +33,8 @@ interface SecuritySettings {
 }
 
 export function SecuritySettingsForm() {
-  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const currentUserId = currentUser?.id ?? auth.currentUser?.uid ?? null;
   const { addNotification } = useNotification();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<FirestoreSetting[]>([]);
@@ -91,7 +92,7 @@ export function SecuritySettingsForm() {
   }, [reset]);
 
   const onSubmit = async (data: SecuritySettings) => {
-    if (!currentUser?.uid) {
+    if (!currentUserId) {
       addNotification({
         type: "error",
         title: "Erreur",
@@ -99,9 +100,8 @@ export function SecuritySettingsForm() {
       });
       return;
     }
-    
     try {
-      const settingsMap = new Map(settings.map(s => [s.key, s]));
+      const settingsMap = new Map(settings.map((s) => [s.key, s]));
       const keyValueMap: Record<string, any> = {
         "security.password_min_length": data.password_min_length,
         "security.password_require_uppercase": data.password_require_uppercase,
@@ -114,14 +114,13 @@ export function SecuritySettingsForm() {
         "security.ip_whitelist_enabled": data.ip_whitelist_enabled,
         "security.ip_addresses": data.ip_addresses,
       };
-      
       await Promise.all(
         Object.entries(keyValueMap).map(async ([key, value]) => {
-          const existingSetting = settingsMap.get(key);
-          if (existingSetting) {
-            await updateSetting(existingSetting.id, value, currentUser.uid);
+          const existing = settingsMap.get(key);
+          if (existing) {
+            await updateSetting(existing.id, value, currentUserId);
           } else {
-            await createSetting({ key, value, category: "security" }, currentUser.uid);
+            await createSetting({ key, value, category: "security" }, currentUserId);
           }
         })
       );

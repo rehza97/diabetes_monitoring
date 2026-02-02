@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -156,7 +156,7 @@ export function PatientForm({
     watch,
     setValue,
   } = useForm<PatientFormData>({
-    resolver: zodResolver(createPatientSchema),
+    resolver: zodResolver(createPatientSchema) as Resolver<PatientFormData>,
     // Don't set defaultValues here - let useEffect handle it when form opens
     defaultValues: {
       doctor_id: "none",
@@ -751,7 +751,7 @@ export function PatientForm({
         </div>
 
         <form
-          onSubmit={handleSubmit(onFormSubmit, (errors) => {
+          onSubmit={handleSubmit(onFormSubmit as SubmitHandler<PatientFormData>, (errors) => {
             console.error("Form validation errors:", errors);
             const errorFields = Object.keys(errors);
             const errorMessages = Object.values(errors)

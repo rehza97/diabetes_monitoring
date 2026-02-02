@@ -34,25 +34,25 @@ export function ChartCard({ title, type, data, config, onExport, className }: Ch
       case "bar":
         return (
           <BarChart
-            data={chartData}
+            data={chartData as { name: string; value: number }[]}
             bars={config?.bars || [{ key: "value", name: "Valeur" }]}
             xAxisKey={config?.xAxisKey || "name"}
           />
         );
       case "pie":
-        return <PieChart data={chartData} colors={config?.colors} />;
+        return <PieChart data={chartData as { name: string; value: number }[]} colors={config?.colors} />;
       case "doughnut":
-        return <DoughnutChart data={chartData} colors={config?.colors} />;
+        return <DoughnutChart data={chartData as { name: string; value: number }[]} colors={config?.colors} />;
       case "area":
         return (
           <AreaChart
-            data={chartData}
+            data={chartData as { name: string; value: number }[]}
             areas={config?.areas || [{ key: "patients", name: "Patients" }]}
             xAxisKey={config?.xAxisKey || "month"}
           />
         );
       case "heatmap":
-        return <HeatmapChart data={chartData} />;
+        return <HeatmapChart data={chartData as { day: string; hour: number; value: number }[]} />;
       default:
         return <div className="text-muted-foreground">Type de graphique non supporté</div>;
     }

@@ -14,6 +14,7 @@ import {
   Stethoscope,
   Menu,
   X,
+  Calendar,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const navigation = [
   { name: "Utilisateurs", href: "/dashboard/users", icon: Users },
   { name: "Patients", href: "/dashboard/patients", icon: UserCircle },
   { name: "Lectures", href: "/dashboard/readings", icon: ClipboardList },
+  { name: "Planning des mesures", href: "/dashboard/scheduled-readings", icon: Calendar },
   { name: "Rapports", href: "/dashboard/reports", icon: FileText },
   { name: "Statistiques", href: "/dashboard/statistics", icon: BarChart3 },
   { name: "Journal d'audit", href: "/dashboard/audit-log", icon: Activity },

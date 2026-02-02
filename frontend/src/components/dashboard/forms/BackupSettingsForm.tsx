@@ -21,6 +21,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { auth } from "@/lib/firebase";
 import { getSettingsByCategory, updateSetting, createSetting } from "@/lib/firestore-helpers";
 import type { FirestoreSetting } from "@/types/firestore";
 
@@ -35,6 +36,7 @@ interface BackupSettings {
 
 export function BackupSettingsForm() {
   const { user: currentUser } = useAuth();
+  const currentUserId = currentUser?.id ?? auth.currentUser?.uid ?? null;
   const { addNotification } = useNotification();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<FirestoreSetting[]>([]);
@@ -88,7 +90,7 @@ export function BackupSettingsForm() {
   }, [reset]);
 
   const onSubmit = async (data: BackupSettings) => {
-    if (!currentUser?.uid) {
+    if (!currentUserId) {
       addNotification({
         type: "error",
         title: "Erreur",
@@ -96,9 +98,8 @@ export function BackupSettingsForm() {
       });
       return;
     }
-    
     try {
-      const settingsMap = new Map(settings.map(s => [s.key, s]));
+      const settingsMap = new Map(settings.map((s) => [s.key, s]));
       const keyValueMap: Record<string, any> = {
         "backup.enabled": data.enabled,
         "backup.frequency": data.frequency,
@@ -106,14 +107,13 @@ export function BackupSettingsForm() {
         "backup.location": data.location,
         "backup.keep_copies": data.keep_copies,
       };
-      
       await Promise.all(
         Object.entries(keyValueMap).map(async ([key, value]) => {
-          const existingSetting = settingsMap.get(key);
-          if (existingSetting) {
-            await updateSetting(existingSetting.id, value, currentUser.uid);
+          const existing = settingsMap.get(key);
+          if (existing) {
+            await updateSetting(existing.id, value, currentUserId);
           } else {
-            await createSetting({ key, value, category: "backup" }, currentUser.uid);
+            await createSetting({ key, value, category: "backup" }, currentUserId);
           }
         })
       );

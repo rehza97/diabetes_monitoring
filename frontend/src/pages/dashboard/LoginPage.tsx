@@ -91,9 +91,9 @@ export function LoginPage() {
     } catch (err) {
       if (err instanceof z.ZodError) {
         const fieldErrors: { email?: string; password?: string; twoFactorCode?: string } = {};
-        err.errors.forEach((error) => {
-          if (error.path[0]) {
-            fieldErrors[error.path[0] as keyof typeof fieldErrors] = error.message;
+        err.issues.forEach((issue) => {
+          if (issue.path[0] !== undefined) {
+            fieldErrors[String(issue.path[0]) as keyof typeof fieldErrors] = issue.message;
           }
         });
         setErrors(fieldErrors);

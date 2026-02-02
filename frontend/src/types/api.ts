@@ -1,3 +1,8 @@
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
 export interface ApiResponse<T> {
   data: T;
   message?: string;

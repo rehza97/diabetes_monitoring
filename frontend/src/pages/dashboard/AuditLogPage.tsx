@@ -172,7 +172,7 @@ export function AuditLogPage() {
               Consultez l'historique complet de toutes les actions du système
             </p>
           </div>
-          <Button variant="outline" onClick={handleExport}>
+          <Button variant="outline" onClick={() => handleExport()}>
             <Download className="mr-2 h-4 w-4" />
             Exporter pour conformité
           </Button>

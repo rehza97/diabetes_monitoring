@@ -19,6 +19,7 @@ interface Alert {
 
 interface AlertCardProps {
   alert: Alert;
+  onDismiss?: () => void;
   className?: string;
 }
 
@@ -45,11 +46,12 @@ const alertConfig = {
   },
 };
 
-export function AlertCard({ alert, className }: AlertCardProps) {
+export function AlertCard({ alert, onDismiss, className }: AlertCardProps) {
   const config = alertConfig[alert.type];
   const Icon = config.icon;
   const timestamp =
     alert.timestamp instanceof Date ? alert.timestamp : new Date(alert.timestamp);
+  const handleDismiss = onDismiss ?? alert.onDismiss;
 
   return (
     <Card className={cn("border-2", config.color, className)}>
@@ -62,12 +64,12 @@ export function AlertCard({ alert, className }: AlertCardProps) {
               <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
             </div>
           </div>
-          {alert.onDismiss && (
+          {handleDismiss && (
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={alert.onDismiss}
+              onClick={handleDismiss}
               aria-label="Fermer l'alerte"
             >
               <X className="h-4 w-4" />

@@ -15,6 +15,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { auth } from "@/lib/firebase";
 import { getSettingsByCategory, updateSetting, createSetting } from "@/lib/firestore-helpers";
 import type { FirestoreSetting } from "@/types/firestore";
 
@@ -32,6 +33,7 @@ interface NotificationSettings {
 
 export function NotificationSettingsForm() {
   const { user: currentUser } = useAuth();
+  const currentUserId = currentUser?.id ?? auth.currentUser?.uid ?? null;
   const { addNotification } = useNotification();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<FirestoreSetting[]>([]);
@@ -88,7 +90,7 @@ export function NotificationSettingsForm() {
   }, [reset]);
 
   const onSubmit = async (data: NotificationSettings) => {
-    if (!currentUser?.uid) {
+    if (!currentUserId) {
       addNotification({
         type: "error",
         title: "Erreur",
@@ -130,13 +132,12 @@ export function NotificationSettingsForm() {
           const existingSetting = settingsMap.get(key);
           
           if (existingSetting) {
-            await updateSetting(existingSetting.id, value, currentUser.uid);
+            await updateSetting(existingSetting.id, value, currentUserId);
           } else {
-            await createSetting({
-              key,
-              value,
-              category: "notifications",
-            }, currentUser.uid);
+            await createSetting(
+              { key, value, category: "notifications" },
+              currentUserId
+            );
           }
         })
       );

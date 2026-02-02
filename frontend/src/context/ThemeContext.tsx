@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { STORAGE_KEYS } from "@/utils/constants";
 
 type Theme = "light" | "dark" | "system";

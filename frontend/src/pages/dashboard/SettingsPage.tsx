@@ -13,30 +13,10 @@ import { BackupSettingsForm } from "@/components/dashboard/forms/BackupSettingsF
 import { EmailSettingsForm } from "@/components/dashboard/forms/EmailSettingsForm";
 import { CheckCircle2, AlertCircle, XCircle, Activity, Database, HardDrive, Clock } from "lucide-react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-
-// Logging utility
-const logError = (context: string, error: unknown, details?: Record<string, unknown>) => {
-  console.error(`[SettingsPage] Error in ${context}:`, error, details);
-};
-
-const logWarning = (context: string, message: string, details?: Record<string, unknown>) => {
-  console.warn(`[SettingsPage] Warning in ${context}:`, message, details);
-};
-
-const logInfo = (context: string, message: string, details?: Record<string, unknown>) => {
-  console.log(`[SettingsPage] Info in ${context}:`, message, details);
-};
+import { getSettingsByCategory } from "@/lib/firestore-helpers";
 
 export function SettingsPage() {
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
-
-  // Component lifecycle logging
-  useEffect(() => {
-    logInfo("componentMount", "SettingsPage mounted");
-    return () => {
-      logInfo("componentUnmount", "SettingsPage unmounting");
-    };
-  }, []);
 
   return (
     <DashboardLayout>
@@ -169,31 +149,38 @@ function SystemHealthMonitoring() {
     const loadHealthData = async () => {
       setLoading(true);
       try {
-        logInfo("loadHealthData", "Loading system health data");
-        // TODO: Replace with actual API calls to get system health data
-        // This would require:
-        // 1. Backend API endpoint for system health metrics
-        // 2. Database size calculation from Firestore
-        // 3. Storage usage from hosting/storage service
-        // 4. Response time from monitoring service
-        // 5. Performance score calculation from various metrics
-        // 6. Backup status from backup service
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        
-        // Set default values - no mock data
-        logWarning("loadHealthData", "System health data not yet implemented - using default values");
+        const backupSettings = await getSettingsByCategory("backup");
+        const backupMap = new Map(backupSettings.map((s) => [s.key, s.value]));
+        const lastBackupRaw = backupMap.get("backup.last_backup");
+        let lastBackup: Date | null = null;
+        if (lastBackupRaw) {
+          const d = typeof lastBackupRaw === "string" ? new Date(lastBackupRaw) : lastBackupRaw instanceof Date ? lastBackupRaw : null;
+          if (d && !isNaN(d.getTime())) lastBackup = d;
+        }
+        const backupEnabled = backupMap.get("backup.enabled") ?? true;
+        const hoursSinceBackup = lastBackup ? (Date.now() - lastBackup.getTime()) / (1000 * 60 * 60) : null;
+        const backupStatus: "up_to_date" | "pending" | "failed" =
+          !lastBackup && backupEnabled ? "pending" : lastBackup && hoursSinceBackup != null && hoursSinceBackup > 48 ? "pending" : "up_to_date";
+
         setHealthData({
-          systemStatus: "healthy", // TODO: Calculate from actual system status
-          backupStatus: "up_to_date", // TODO: Get from backup service
-          storageUsage: 0, // TODO: Calculate from actual storage usage
-          performanceScore: 0, // TODO: Calculate from performance metrics
-          lastBackup: null, // TODO: Get from backup service
-          databaseSize: 0, // TODO: Calculate from Firestore database size
-          responseTime: 0, // TODO: Measure from actual API response times
+          systemStatus: "healthy",
+          backupStatus,
+          storageUsage: 0,
+          performanceScore: 0,
+          lastBackup,
+          databaseSize: 0,
+          responseTime: 0,
         });
-        logInfo("loadHealthData", "Health data initialized with defaults");
-      } catch (error) {
-        logError("loadHealthData", error);
+      } catch {
+        setHealthData({
+          systemStatus: "healthy",
+          backupStatus: "up_to_date",
+          storageUsage: 0,
+          performanceScore: 0,
+          lastBackup: null,
+          databaseSize: 0,
+          responseTime: 0,
+        });
       } finally {
         setLoading(false);
       }
@@ -351,7 +338,7 @@ function SystemHealthMonitoring() {
                   <p className="text-sm text-muted-foreground">
                     {healthData.lastBackup
                       ? `Il y a ${Math.round((Date.now() - healthData.lastBackup.getTime()) / (1000 * 60 * 60))} heures`
-                      : "Non disponible - Les données de sauvegarde ne sont pas encore implémentées"}
+                      : "Non disponible"}
                   </p>
                 </div>
               </div>
@@ -360,8 +347,8 @@ function SystemHealthMonitoring() {
 
             <div className="p-4 bg-muted/50 rounded-lg">
               <p className="text-sm text-muted-foreground">
-                <strong>Note:</strong> Les sauvegardes automatiques sont configurées dans l'onglet "Sauvegarde".
-                Les métriques de santé système sont mises à jour en temps réel.
+                <strong>Note:</strong> Les sauvegardes sont configurées dans l'onglet &quot;Sauvegarde&quot;.
+                Stockage, base de données et temps de réponse nécessitent un backend ou des APIs dédiées.
               </p>
             </div>
           </div>

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { auth } from "@/lib/firebase";
 import { getSettingsByCategory, updateSetting, createSetting } from "@/lib/firestore-helpers";
 import type { FirestoreSetting } from "@/types/firestore";
 
@@ -27,6 +28,7 @@ interface EmailSettings {
 
 export function EmailSettingsForm() {
   const { user: currentUser } = useAuth();
+  const currentUserId = currentUser?.id ?? auth.currentUser?.uid ?? null;
   const { addNotification } = useNotification();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<FirestoreSetting[]>([]);
@@ -82,7 +84,7 @@ export function EmailSettingsForm() {
   }, [reset]);
 
   const onSubmit = async (data: EmailSettings) => {
-    if (!currentUser?.uid) {
+    if (!currentUserId) {
       addNotification({
         type: "error",
         title: "Erreur",
@@ -90,9 +92,8 @@ export function EmailSettingsForm() {
       });
       return;
     }
-    
     try {
-      const settingsMap = new Map(settings.map(s => [s.key, s]));
+      const settingsMap = new Map(settings.map((s) => [s.key, s]));
       const keyValueMap: Record<string, any> = {
         "email.smtp_host": data.smtp_host,
         "email.smtp_port": data.smtp_port,
@@ -103,14 +104,13 @@ export function EmailSettingsForm() {
         "email.from_name": data.from_name,
         "email.email_signature": data.email_signature,
       };
-      
       await Promise.all(
         Object.entries(keyValueMap).map(async ([key, value]) => {
-          const existingSetting = settingsMap.get(key);
-          if (existingSetting) {
-            await updateSetting(existingSetting.id, value, currentUser.uid);
+          const existing = settingsMap.get(key);
+          if (existing) {
+            await updateSetting(existing.id, value, currentUserId);
           } else {
-            await createSetting({ key, value, category: "email" }, currentUser.uid);
+            await createSetting({ key, value, category: "email" }, currentUserId);
           }
         })
       );

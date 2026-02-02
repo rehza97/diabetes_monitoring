@@ -16,6 +16,12 @@ export const passwordSchema = z
   .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
   .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre");
 
+// Login form validation
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "Le mot de passe est requis"),
+});
+
 // Reading value validation
 export const readingValueSchema = z
   .number()
@@ -58,25 +64,23 @@ export const createPatientSchema = z
       .min(2, "Le prénom doit contenir au moins 2 caractères"),
     last_name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
     date_of_birth: dateSchema,
-    gender: z.enum(["male", "female"], {
-      errorMap: () => ({ message: "Veuillez sélectionner un sexe" }),
-    }),
+    gender: z.enum(["male", "female"], { message: "Veuillez sélectionner un sexe" }),
     phone: phoneSchema,
     email: z.union([emailSchema, z.literal("")]).optional(),
     address: z.string().optional().or(z.literal("")),
-    diabetes_type: z.enum(["type1", "type2", "gestational"], {
-      errorMap: () => ({ message: "Veuillez sélectionner un type de diabète" }),
-    }),
+    diabetes_type: z.enum(["type1", "type2", "gestational"], { message: "Veuillez sélectionner un type de diabète" }),
     diagnosis_date: dateSchema,
     blood_type: z.string().optional().or(z.literal("")),
     weight: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) return undefined;
-      const num = typeof val === "string" ? parseFloat(val) : val;
+      if (typeof val === "number" && !isNaN(val)) return val;
+      const num = typeof val === "string" ? parseFloat(val) : Number(val);
       return isNaN(num) ? undefined : num;
     }, z.number().positive().optional()),
     height: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) return undefined;
-      const num = typeof val === "string" ? parseFloat(val) : val;
+      if (typeof val === "number" && !isNaN(val)) return val;
+      const num = typeof val === "string" ? parseFloat(val) : Number(val);
       return isNaN(num) ? undefined : num;
     }, z.number().positive().optional()),
     doctor_id: z.string().optional().or(z.literal("")),
@@ -114,25 +118,24 @@ export const createReadingSchema = z.object({
     "random",
   ]),
   date: dateSchema,
-  time: z
-    .string()
-    .regex(
-      /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
-      "Format d'heure invalide (HH:mm)",
-    ),
+  time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:mm)"),
   notes: z.string().optional(),
-  symptoms: z.array(z.string()).optional(),
-  condition_during_reading: z.string().optional(),
 });
 
-// Login form validation
-export const loginSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1, "Le mot de passe est requis"),
-  remember: z.boolean().optional(),
+// Medical Note form validation
+export const createMedicalNoteSchema = z.object({
+  noteType: z.enum(["diagnosis", "prescription", "observation", "followup"], { message: "Veuillez sélectionner un type de note" }),
+  content: z.string().min(1, "Le contenu est requis"),
+  isImportant: z.boolean().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
-export type CreateUserInput = z.infer<typeof createUserSchema>;
-export type CreatePatientInput = z.infer<typeof createPatientSchema>;
-export type CreateReadingInput = z.infer<typeof createReadingSchema>;
-export type LoginInput = z.infer<typeof loginSchema>;
+// Medication form validation
+export const createMedicationSchema = z.object({
+  medicationName: z.string().min(1, "Le nom du médicament est requis"),
+  dosage: z.string().min(1, "Le dosage est requis"),
+  frequency: z.string().min(1, "La fréquence est requise"),
+  startDate: dateSchema,
+  endDate: dateSchema.optional().or(z.literal("")),
+  notes: z.string().optional().or(z.literal("")),
+});

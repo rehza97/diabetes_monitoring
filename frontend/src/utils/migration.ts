@@ -13,12 +13,14 @@ import {
   createMedicalNote,
   createMedication,
   createUser,
-  type CreateFirestorePatientDto,
-  type CreateFirestoreReadingDto,
-  type CreateFirestoreMedicalNoteDto,
-  type CreateFirestoreMedicationDto,
-  type CreateFirestoreUserDto,
 } from "@/lib/firestore-helpers";
+import type {
+  CreateFirestorePatientDto,
+  CreateFirestoreReadingDto,
+  CreateFirestoreMedicalNoteDto,
+  CreateFirestoreMedicationDto,
+  CreateFirestoreUserDto,
+} from "@/types/firestore";
 import type {
   Patient,
   Reading,

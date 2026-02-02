@@ -46,9 +46,9 @@ interface Patient {
 
 interface PatientsTableProps {
   patients: Patient[];
+  onView?: (patient: Patient) => void;
   onEdit?: (patient: Patient) => void;
   onDelete?: (patient: Patient) => void;
-  onView?: (patient: Patient) => void;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
 }

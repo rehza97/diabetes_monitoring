@@ -47,9 +47,9 @@ export function ContactForm() {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Partial<Record<keyof ContactFormData, string>> = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof ContactFormData] = err.message;
+        error.issues.forEach((err) => {
+          if (err.path[0] !== undefined) {
+            fieldErrors[String(err.path[0]) as keyof ContactFormData] = err.message;
           }
         });
         setErrors(fieldErrors);

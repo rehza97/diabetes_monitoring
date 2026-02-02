@@ -197,8 +197,12 @@ function useUserReadings(userId: string | undefined, patients: FirestorePatient[
           
           // Sort by date descending
           allReadings.sort((a, b) => {
-            const dateA = a.date?.toDate ? a.date.toDate() : (a.date ? new Date(a.date) : new Date(0));
-            const dateB = b.date?.toDate ? b.date.toDate() : (b.date ? new Date(b.date) : new Date(0));
+            const toDate = (d: unknown): Date =>
+              d && typeof (d as { toDate?: () => Date }).toDate === "function"
+                ? (d as { toDate: () => Date }).toDate()
+                : d ? new Date(d as string | number) : new Date(0);
+            const dateA = toDate(a.date);
+            const dateB = toDate(b.date);
             return dateB.getTime() - dateA.getTime();
           });
         } else {

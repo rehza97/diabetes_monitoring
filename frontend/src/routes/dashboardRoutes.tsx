@@ -15,6 +15,7 @@ import { AdvancedSearchPage } from "@/pages/dashboard/AdvancedSearchPage";
 import { TwoFactorSetupPage } from "@/pages/dashboard/TwoFactorSetupPage";
 import { UserDetailView } from "@/components/dashboard/views/UserDetailView";
 import { PatientDetailView } from "@/components/dashboard/views/PatientDetailView";
+import { ScheduledReadingsPage } from "@/pages/dashboard/ScheduledReadingsPage";
 
 export const dashboardRoutes: RouteObject[] = [
   {
@@ -76,6 +77,10 @@ export const dashboardRoutes: RouteObject[] = [
   {
     path: "/dashboard/search",
     element: <AdvancedSearchPage />,
+  },
+  {
+    path: "/dashboard/scheduled-readings",
+    element: <ScheduledReadingsPage />,
   },
   {
     path: "/dashboard/settings/two-factor",

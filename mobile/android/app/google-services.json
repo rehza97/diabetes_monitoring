@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "451244213129",
+    "project_id": "diabetes-monitoring-app-8e131",
+    "storage_bucket": "diabetes-monitoring-app-8e131.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:451244213129:android:aeb574a1bd458b9ab4d758",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGXUG5YFWtMEHZWvqWmkpoa_XagZCJ5_Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

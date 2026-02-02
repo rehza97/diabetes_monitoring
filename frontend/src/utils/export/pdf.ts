@@ -30,15 +30,15 @@ export async function exportPatientReportToPDF(
 
   // Title
   doc.setFontSize(14);
-  doc.text(options.title, pageWidth / 2, yPos, { align: "center" });
+  doc.text(options.title ?? "Rapport", pageWidth / 2, yPos, { align: "center" });
   yPos += 15;
 
   // Patient Information
   doc.setFontSize(12);
-  doc.setFont(undefined, "bold");
+  doc.setFont("helvetica", "bold");
   doc.text("Informations Patient", 20, yPos);
   yPos += 8;
-  doc.setFont(undefined, "normal");
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
 
   const patientInfo = [
@@ -68,20 +68,20 @@ export async function exportPatientReportToPDF(
     }
 
     doc.setFontSize(12);
-    doc.setFont(undefined, "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("Historique des Mesures", 20, yPos);
     yPos += 8;
-    doc.setFont(undefined, "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
 
     // Table header
-    doc.setFont(undefined, "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("Date", 20, yPos);
     doc.text("Valeur", 60, yPos);
     doc.text("Type", 90, yPos);
     doc.text("État", 130, yPos);
     yPos += 6;
-    doc.setFont(undefined, "normal");
+    doc.setFont("helvetica", "normal");
 
     // Table rows
     readings.slice(0, 30).forEach((reading) => {
@@ -140,19 +140,19 @@ export async function exportReadingsReportToPDF(
 
   // Title
   doc.setFontSize(14);
-  doc.text(options.title, pageWidth / 2, yPos, { align: "center" });
+  doc.text(options.title ?? "Rapport", pageWidth / 2, yPos, { align: "center" });
   yPos += 15;
 
   // Table header
   doc.setFontSize(10);
-  doc.setFont(undefined, "bold");
+  doc.setFont("helvetica", "bold");
   doc.text("Patient", 20, yPos);
   doc.text("Date", 60, yPos);
   doc.text("Valeur", 100, yPos);
   doc.text("Type", 130, yPos);
   doc.text("État", 160, yPos);
   yPos += 6;
-  doc.setFont(undefined, "normal");
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
 
   // Table rows

@@ -35,20 +35,22 @@ export function parsePatientExcelFile(file: File): Promise<{
             const patient: CreateFirestorePatientDto = {
               firstName: row["Prénom"] || row["First Name"] || "",
               lastName: row["Nom"] || row["Last Name"] || "",
-              dateOfBirth: row["Date de naissance"] || row["Date of Birth"]
-                ? Timestamp.fromDate(new Date(row["Date de naissance"] || row["Date of Birth"]))
-                : undefined,
+              dateOfBirth: (row["Date de naissance"] || row["Date of Birth"])
+                ? Timestamp.fromDate(new Date(row["Date de naissance"] || row["Date of Birth"] as string))
+                : Timestamp.now(),
               gender: (row["Sexe"] || row["Gender"] || "male") as "male" | "female",
               phone: row["Téléphone"] || row["Phone"] || "",
               email: row["Email"] || "",
               address: row["Adresse"] || row["Address"] || "",
               diabetesType: (row["Type de diabète"] || row["Diabetes Type"] || "type2") as "type1" | "type2" | "gestational",
-              diagnosisDate: row["Date de diagnostic"] || row["Diagnosis Date"]
-                ? Timestamp.fromDate(new Date(row["Date de diagnostic"] || row["Diagnosis Date"]))
-                : undefined,
+              diagnosisDate: (row["Date de diagnostic"] || row["Diagnosis Date"])
+                ? Timestamp.fromDate(new Date(row["Date de diagnostic"] || row["Diagnosis Date"] as string))
+                : Timestamp.now(),
               bloodType: row["Groupe sanguin"] || row["Blood Type"] || undefined,
               weight: row["Poids"] || row["Weight"] ? Number(row["Poids"] || row["Weight"]) : undefined,
               height: row["Taille"] || row["Height"] ? Number(row["Taille"] || row["Height"]) : undefined,
+              doctorId: (row["Médecin"] || row["Doctor"] || "none") as string,
+              nurseId: (row["Infirmier"] || row["Nurse"] || "none") as string,
             };
 
             // Validate required fields
