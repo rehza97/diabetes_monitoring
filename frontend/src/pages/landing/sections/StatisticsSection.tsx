@@ -31,7 +31,7 @@ const stats = [
 export function StatisticsSection() {
   return (
     <section className="bg-[#f8f9fa] py-20">
-      <div className="container px-6">
+      <div className="container px-6 mx-auto max-w-6xl">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, index) => (
             <AnimatedCounter

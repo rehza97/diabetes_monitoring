@@ -58,7 +58,7 @@ export function NavigationMenu() {
         isScrolled && "shadow-sm"
       )}
     >
-      <div className="container px-6 flex h-16 items-center justify-between">
+      <div className="container px-6 mx-auto max-w-6xl flex h-16 items-center justify-between">
         <Link
           to="/"
           className="flex items-center gap-2 text-xl font-bold text-primary hover:text-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md"

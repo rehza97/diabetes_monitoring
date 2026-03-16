@@ -17,7 +17,7 @@ export function CTASection() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="container px-6 relative z-10 space-y-16">
+      <div className="container px-6 mx-auto max-w-6xl relative z-10 space-y-16">
         {/* App download: QR code + direct download button */}
         <div className="flex flex-col items-center gap-6 text-center">
           <div className="flex items-center gap-2">

@@ -24,7 +24,7 @@ const screenshots = [
 export function ScreenshotsSection() {
   return (
     <section id="screenshots" className="py-20 bg-white">
-      <div className="container px-6">
+      <div className="container px-6 mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center mb-12">
           <h2 className="mb-4 text-3xl font-bold md:text-4xl">Aperçu de l'application</h2>
           <p className="text-muted-foreground">

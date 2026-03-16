@@ -187,21 +187,30 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: _rememberMe,
-                              onChanged: _isSubmitting
-                                  ? null
-                                  : (value) {
-                                      setState(() => _rememberMe = value ?? false);
-                                    },
-                            ),
-                            const Text('Se souvenir de moi'),
-                          ],
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Checkbox(
+                                value: _rememberMe,
+                                onChanged: _isSubmitting
+                                    ? null
+                                    : (value) {
+                                        setState(() => _rememberMe = value ?? false);
+                                      },
+                              ),
+                              const Flexible(
+                                child: Text(
+                                  'Se souvenir de moi',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         TextButton(
-                          onPressed: _isSubmitting ? null : () => Navigator.pushNamed(context, '/forgot-password'),
+                          onPressed:
+                              _isSubmitting ? null : () => Navigator.pushNamed(context, '/forgot-password'),
                           child: const Text('Mot de passe oublié ?'),
                         ),
                       ],

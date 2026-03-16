@@ -97,29 +97,47 @@ async function createAdminAccount() {
   try {
     console.log("\n=== Create Admin Account ===\n");
 
-    // Get admin details from user
-    const email = await question("Admin email address: ");
-    if (!email || !email.includes("@")) {
-      throw new Error("Invalid email address");
-    }
+    // Support non-interactive mode via env vars (e.g. for CI or one-off setup)
+    const envEmail = process.env.ADMIN_EMAIL?.trim();
+    const envPassword = process.env.ADMIN_PASSWORD;
+    const envFirstName = process.env.ADMIN_FIRST_NAME?.trim() || "Admin";
+    const envLastName = process.env.ADMIN_LAST_NAME?.trim() || "User";
+    const envPhone = process.env.ADMIN_PHONE?.trim() || null;
+    const isNonInteractive = envEmail && envPassword && envPassword.length >= 6;
 
-    const password = await question("Admin password (min 6 characters): ");
-    if (!password || password.length < 6) {
-      throw new Error("Password must be at least 6 characters");
-    }
+    let email, password, firstName, lastName, phoneNumber;
+    if (isNonInteractive) {
+      email = envEmail;
+      password = envPassword;
+      firstName = envFirstName;
+      lastName = envLastName;
+      phoneNumber = envPhone;
+      console.log("Using credentials from environment (ADMIN_EMAIL, ADMIN_PASSWORD, etc.)");
+    } else {
+      // Get admin details from user (interactive)
+      email = await question("Admin email address: ");
+      if (!email || !email.includes("@")) {
+        throw new Error("Invalid email address");
+      }
 
-    const firstName = await question("First name: ");
-    if (!firstName || firstName.trim().length === 0) {
-      throw new Error("First name is required");
-    }
+      password = await question("Admin password (min 6 characters): ");
+      if (!password || password.length < 6) {
+        throw new Error("Password must be at least 6 characters");
+      }
 
-    const lastName = await question("Last name: ");
-    if (!lastName || lastName.trim().length === 0) {
-      throw new Error("Last name is required");
-    }
+      firstName = await question("First name: ");
+      if (!firstName || firstName.trim().length === 0) {
+        throw new Error("First name is required");
+      }
 
-    const phone = await question("Phone number (optional, press Enter to skip): ");
-    const phoneNumber = phone.trim() || null;
+      lastName = await question("Last name: ");
+      if (!lastName || lastName.trim().length === 0) {
+        throw new Error("Last name is required");
+      }
+
+      const phone = await question("Phone number (optional, press Enter to skip): ");
+      phoneNumber = phone.trim() || null;
+    }
 
     console.log("\nCreating admin account...");
 
@@ -141,6 +159,11 @@ async function createAdminAccount() {
     try {
       userRecord = await auth.getUserByEmail(email);
       console.log(`✓ User with email ${email} already exists. Updating...`);
+      // In non-interactive mode, update password so env password takes effect
+      if (isNonInteractive) {
+        await auth.updateUser(userRecord.uid, { password });
+        console.log("✓ Updated password in Firebase Authentication");
+      }
     } catch (error) {
       if (error.code === "auth/user-not-found") {
         // Create new user in Firebase Authentication

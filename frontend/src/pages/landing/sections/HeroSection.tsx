@@ -16,7 +16,7 @@ export function HeroSection() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="container px-6">
+      <div className="container px-6 mx-auto max-w-6xl">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
           {/* Left column - Text content */}
           <div className="text-center lg:text-left space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
