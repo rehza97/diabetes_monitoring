@@ -286,12 +286,52 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             ),
             const SizedBox(height: 8),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(Icons.phone, size: 16, color: theme.colorScheme.onSurfaceVariant),
                 const SizedBox(width: 8),
-                Text(p.phone, style: theme.textTheme.bodyMedium),
+                Expanded(
+                  child: Text(
+                    p.phone.trim().isNotEmpty ? p.phone : 'Non renseigné',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: p.phone.trim().isNotEmpty
+                          ? null
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               ],
             ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.calendar_today, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Année de diagnostic : ${p.diagnosisDate.toDate().year}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+            if (p.bloodType != null && p.bloodType!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.bloodtype, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Groupe sanguin : ${p.bloodType}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 4),
             Text('$diabetesLabel · $statusLabel',
                 style: theme.textTheme.bodySmall?.copyWith(

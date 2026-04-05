@@ -130,7 +130,11 @@ class _DoctorEditPatientPageState extends State<DoctorEditPatientPage> {
         'diagnosisDate': Timestamp.fromDate(diagnosisDate),
         'email': FieldValue.delete(),
         if (address != null) 'address': address.toMap(),
-        if (data['bloodType'] != null) 'bloodType': data['bloodType'] as String?,
+        if (data['bloodType'] != null &&
+            (data['bloodType'] as String).isNotEmpty)
+          'bloodType': data['bloodType'] as String
+        else
+          'bloodType': FieldValue.delete(),
         if (data['weight'] != null) 'weight': data['weight'] as double?,
         if (data['height'] != null) 'height': data['height'] as double?,
       };

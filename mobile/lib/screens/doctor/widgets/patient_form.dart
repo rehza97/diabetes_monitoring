@@ -38,16 +38,29 @@ class _PatientFormState extends State<PatientForm> {
   final _phoneController = TextEditingController();
   final _ageController = TextEditingController();
   final _addressController = TextEditingController();
-  final _bloodTypeController = TextEditingController();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
   final _diagnosisYearController = TextEditingController();
 
   String _gender = 'male';
   DiabetesType _diabetesType = DiabetesType.type2;
+  /// Same values as web Select (empty = non renseigné).
+  String _bloodType = '';
   String? _nurseId;
 
   static const _noneId = 'none';
+
+  static const List<String> _bloodTypeValues = [
+    '',
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'AB+',
+    'AB-',
+    'O+',
+    'O-',
+  ];
 
   @override
   void initState() {
@@ -77,7 +90,8 @@ class _PatientFormState extends State<PatientForm> {
     _ageController.text =
         '${completedYearsFromBirthDate(p.dateOfBirth.toDate())}';
     _addressController.text = p.address?.street ?? '';
-    _bloodTypeController.text = p.bloodType ?? '';
+    final bt = (p.bloodType ?? '').trim();
+    _bloodType = _bloodTypeValues.contains(bt) ? bt : '';
     _weightController.text = p.weight != null ? p.weight!.toString() : '';
     _heightController.text = p.height != null ? p.height!.toString() : '';
     _gender = p.gender;
@@ -99,7 +113,6 @@ class _PatientFormState extends State<PatientForm> {
     _phoneController.dispose();
     _ageController.dispose();
     _addressController.dispose();
-    _bloodTypeController.dispose();
     _weightController.dispose();
     _heightController.dispose();
     _diagnosisYearController.dispose();
@@ -120,7 +133,7 @@ class _PatientFormState extends State<PatientForm> {
       'address': address.isEmpty ? null : address,
       'diabetesType': _diabetesType,
       'diagnosisYear': diagnosisYearParsed,
-      'bloodType': _bloodTypeController.text.trim().isEmpty ? null : _bloodTypeController.text.trim(),
+      'bloodType': _bloodType.isEmpty ? null : _bloodType,
       'weight': _parseDouble(_weightController.text),
       'height': _parseDouble(_heightController.text),
       'nurseId': _nurseId == _noneId || _nurseId == null || _nurseId!.isEmpty ? null : _nurseId,
@@ -135,26 +148,6 @@ class _PatientFormState extends State<PatientForm> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    final y = int.tryParse(_diagnosisYearController.text.trim());
-    if (y == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Année de diagnostic requise')),
-      );
-      return;
-    }
-    final nowY = DateTime.now().year;
-    if (y < 1900 || y > nowY) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            y > nowY
-                ? 'L\'année ne peut pas être dans le futur.'
-                : 'Année invalide (minimum 1900).',
-          ),
-        ),
-      );
-      return;
-    }
     widget.onSubmit(_collectData());
   }
 
@@ -226,7 +219,8 @@ class _PatientFormState extends State<PatientForm> {
                       if (t.isEmpty) return null;
                       final n = int.tryParse(t);
                       if (n == null) return 'Nombre entier requis.';
-                      if (n < 0 || n > 120) return 'Âge entre 0 et 120.';
+                      if (n < 0) return 'L\'âge doit être au moins 0';
+                      if (n > 120) return 'L\'âge est trop élevé';
                       return null;
                     },
                   ),
@@ -261,7 +255,7 @@ class _PatientFormState extends State<PatientForm> {
                       final t = (v ?? '').trim().replaceAll(RegExp(r'\s'), '');
                       if (t.isEmpty) return null;
                       if (!isValidFrenchPhone(t)) {
-                        return 'Numéro invalide (ex. 0612345678 ou +33612345678).';
+                        return 'Numéro de téléphone invalide';
                       }
                       return null;
                     },
@@ -305,29 +299,55 @@ class _PatientFormState extends State<PatientForm> {
                   TextFormField(
                     controller: _diagnosisYearController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Année de diagnostic *',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.calendar_today),
+                      hintText:
+                          '1900–${DateTime.now().year}',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.calendar_today),
                     ),
                     validator: (v) {
                       final t = (v ?? '').trim();
-                      if (t.isEmpty) return 'Année requise.';
+                      if (t.isEmpty) {
+                        return 'Année de diagnostic requise';
+                      }
                       final n = int.tryParse(t);
                       if (n == null) return 'Nombre entier requis.';
-                      if (n < 1900) return 'Minimum 1900.';
+                      if (n < 1900) return 'Année invalide';
                       if (n > DateTime.now().year) {
-                        return 'Pas dans le futur.';
+                        return 'L\'année ne peut pas être dans le futur';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _bloodTypeController,
+                  InputDecorator(
                     decoration: const InputDecoration(
-                      labelText: 'Groupe sanguin (optionnel)',
+                      labelText: 'Groupe sanguin',
                       border: OutlineInputBorder(),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _bloodType.isEmpty ? '' : _bloodType,
+                        isExpanded: true,
+                        hint: const Text('Sélectionner'),
+                        items: [
+                          const DropdownMenuItem(
+                            value: '',
+                            child: Text('Non renseigné'),
+                          ),
+                          ..._bloodTypeValues
+                              .where((x) => x.isNotEmpty)
+                              .map(
+                                (x) => DropdownMenuItem(
+                                  value: x,
+                                  child: Text(x),
+                                ),
+                              ),
+                        ],
+                        onChanged: (v) =>
+                            setState(() => _bloodType = v ?? ''),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
