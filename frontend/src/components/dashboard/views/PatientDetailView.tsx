@@ -723,16 +723,11 @@ export function PatientDetailView() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Date de diagnostic
+                    Année de diagnostic
                   </p>
                   <p className="font-medium">
                     {patient.diagnosisDate
-                      ? formatDate(
-                          patient.diagnosisDate
-                            .toDate()
-                            .toISOString()
-                            .split("T")[0],
-                        )
+                      ? String(patient.diagnosisDate.toDate().getFullYear())
                       : "N/A"}
                   </p>
                 </div>

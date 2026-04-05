@@ -56,6 +56,15 @@ export const createUserSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
+// Patient form: optional phone (French format when non-empty)
+const patientPhoneSchema = z
+  .string()
+  .transform((s) => s.replace(/\s/g, ""))
+  .refine(
+    (s) => s === "" || /^(\+33|0)[1-9](\d{2}){4}$/.test(s),
+    { message: "Numéro de téléphone invalide" },
+  );
+
 // Patient form validation
 export const createPatientSchema = z
   .object({
@@ -63,17 +72,30 @@ export const createPatientSchema = z
       .string()
       .min(2, "Le prénom doit contenir au moins 2 caractères"),
     last_name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-    date_of_birth: dateSchema,
+    age: z.preprocess((val) => {
+      if (val === "" || val === null || val === undefined) return undefined;
+      if (typeof val === "number" && !isNaN(val)) return val;
+      const num =
+        typeof val === "string" ? parseInt(val, 10) : Number(val);
+      return isNaN(num) ? undefined : num;
+    }, z.number().int().min(0, "L'âge doit être au moins 0").max(120, "L'âge est trop élevé").optional()),
     gender: z.enum(["male", "female"], {
       message: "Veuillez sélectionner un sexe",
     }),
-    phone: phoneSchema,
-    email: z.union([emailSchema, z.literal("")]).optional(),
+    phone: patientPhoneSchema,
     address: z.string().optional().or(z.literal("")),
     diabetes_type: z.enum(["type1", "type2", "gestational"], {
       message: "Veuillez sélectionner un type de diabète",
     }),
-    diagnosis_date: dateSchema,
+    diagnosis_year: z.preprocess((val) => {
+      if (val === "" || val === null || val === undefined) return undefined;
+      if (typeof val === "number" && !isNaN(val)) return val;
+      const num =
+        typeof val === "string" ? parseInt(val, 10) : Number(val);
+      return isNaN(num) ? undefined : num;
+    }, z.number().int().min(1900, "Année invalide").refine((y) => y <= new Date().getFullYear(), {
+      message: "L'année ne peut pas être dans le futur",
+    })),
     blood_type: z.string().optional().or(z.literal("")),
     weight: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) return undefined;

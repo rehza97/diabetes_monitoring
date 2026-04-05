@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useForm, type Resolver, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,23 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { createPatientSchema, emailSchema } from "@/utils/validators";
+import { createPatientSchema } from "@/utils/validators";
 import { z } from "zod";
-import { Upload, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { getInitials, formatFullName } from "@/utils/helpers";
-import { calculateBMI } from "@/utils/formatters";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { formatFullName } from "@/utils/helpers";
+import { calculateBMI, calculateAge } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
 import { useUsers } from "@/hooks/useFirestore";
 import { usersCollection } from "@/lib/firestore-helpers";
 import { query, where, orderBy, limit } from "firebase/firestore";
@@ -51,16 +41,14 @@ interface PatientFormProps {
     date_of_birth: string;
     gender: "male" | "female";
     phone: string;
-    email?: string;
     address?: string;
     diabetes_type: "type1" | "type2" | "gestational";
-    diagnosis_date: string;
+    diagnosis_year: number;
     blood_type?: string;
     weight?: number;
     height?: number;
     doctor_id?: string;
     nurse_id?: string;
-    avatar?: string;
   };
   isOpen: boolean;
   onClose: () => void;
@@ -81,9 +69,6 @@ export function PatientForm({
 }: PatientFormProps) {
   const isEdit = !!patient;
   const [currentStep, setCurrentStep] = useState(1);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    patient?.avatar || null,
-  );
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Note: useAuth is imported but not used directly - we get admin from query instead
 
@@ -161,6 +146,7 @@ export function PatientForm({
     defaultValues: {
       doctor_id: "none",
       nurse_id: "none",
+      phone: "",
     },
   });
 
@@ -184,7 +170,6 @@ export function PatientForm({
           date_of_birth: patient.date_of_birth,
           gender: patient.gender,
           phone: patient.phone,
-          email: patient.email,
           doctor_id: patient.doctor_id,
           nurse_id: patient.nurse_id,
         });
@@ -195,13 +180,12 @@ export function PatientForm({
         ? {
             first_name: patient.first_name || "",
             last_name: patient.last_name || "",
-            date_of_birth: patient.date_of_birth || "",
+            age: calculateAge(patient.date_of_birth),
             gender: patient.gender,
             phone: patient.phone || "",
-            email: patient.email || "",
             address: patient.address || "",
             diabetes_type: patient.diabetes_type,
-            diagnosis_date: patient.diagnosis_date || "",
+            diagnosis_year: patient.diagnosis_year,
             blood_type: patient.blood_type || "",
             weight: patient.weight,
             height: patient.height,
@@ -223,21 +207,30 @@ export function PatientForm({
 
       console.log("📝 [PatientForm] Form data being reset:", formData);
       reset(formData);
-      setAvatarPreview(patient?.avatar || null);
       setCurrentStep(1);
     }
   }, [isOpen, patient, reset, defaultAdminId]);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const fillDevTestData = useCallback(() => {
+    const doctorPick = defaultAdminId || doctors[0]?.id || "none";
+    const nursePick =
+      doctorPick !== "none" ? "none" : (nurses[0]?.id ?? "none");
+    const opts = { shouldValidate: true, shouldDirty: true } as const;
+    setValue("first_name", "Jean", opts);
+    setValue("last_name", "TestDev", opts);
+    setValue("age", 42, opts);
+    setValue("gender", "male", opts);
+    setValue("phone", "0612345678", opts);
+    setValue("address", "12 rue du Test, 75001 Paris", opts);
+    setValue("diabetes_type", "type2", opts);
+    setValue("diagnosis_year", new Date().getFullYear() - 2, opts);
+    setValue("blood_type", "O+", opts);
+    setValue("weight", 78, opts);
+    setValue("height", 176, opts);
+    setValue("doctor_id", doctorPick, opts);
+    setValue("nurse_id", nursePick, opts);
+    setSubmitError(null);
+  }, [defaultAdminId, doctors, nurses, setValue]);
 
   const onFormSubmit = async (data: PatientFormData) => {
     setSubmitError(null);
@@ -286,8 +279,6 @@ export function PatientForm({
       // Remove undefined values for optional fields
       if (formData.weight === undefined) delete formData.weight;
       if (formData.height === undefined) delete formData.height;
-      if (formData.email === undefined || formData.email === "")
-        delete formData.email;
       if (formData.address === undefined || formData.address === "")
         delete formData.address;
       if (formData.blood_type === undefined || formData.blood_type === "")
@@ -299,7 +290,6 @@ export function PatientForm({
       console.log("Form submitted successfully");
       onClose();
       reset();
-      setAvatarPreview(null);
       setCurrentStep(1);
       setSubmitError(null);
     } catch (error) {
@@ -329,39 +319,6 @@ export function PatientForm({
       case 1:
         return (
           <div className="space-y-4">
-            {/* Avatar */}
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={avatarPreview || undefined} />
-                <AvatarFallback>
-                  {watch("first_name") && watch("last_name")
-                    ? getInitials(watch("first_name"), watch("last_name"))
-                    : "P"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <Label htmlFor="avatar">Photo de profil</Label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input
-                    id="avatar"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById("avatar")?.click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Choisir une photo
-                  </Button>
-                </div>
-              </div>
-            </div>
-
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="first_name">
@@ -389,18 +346,22 @@ export function PatientForm({
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="date_of_birth">
-                  Date de naissance <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="age">Âge (optionnel)</Label>
                 <Input
-                  id="date_of_birth"
-                  type="date"
-                  {...register("date_of_birth")}
-                  max={new Date().toISOString().split("T")[0]}
+                  id="age"
+                  type="number"
+                  min={0}
+                  max={120}
+                  {...register("age", {
+                    setValueAs: (v) =>
+                      v === "" || v === null || v === undefined
+                        ? undefined
+                        : parseInt(String(v), 10),
+                  })}
                 />
-                {errors.date_of_birth && (
+                {errors.age && (
                   <p className="text-sm text-destructive">
-                    {errors.date_of_birth.message}
+                    {errors.age.message}
                   </p>
                 )}
               </div>
@@ -430,38 +391,14 @@ export function PatientForm({
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="phone">
-                  Téléphone <span className="text-destructive">*</span>
-                </Label>
-                <Input id="phone" {...register("phone")} />
-                {errors.phone && (
-                  <p className="text-sm text-destructive">
-                    {errors.phone.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email (optionnel)</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  {...register("email", {
-                    validate: (value) => {
-                      if (!value || value === "") return true; // Empty is OK
-                      return (
-                        emailSchema.safeParse(value).success || "Email invalide"
-                      );
-                    },
-                  })}
-                />
-                {errors.email && (
-                  <p className="text-sm text-destructive">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Téléphone (optionnel)</Label>
+              <Input id="phone" type="tel" {...register("phone")} />
+              {errors.phone && (
+                <p className="text-sm text-destructive">
+                  {errors.phone.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -504,17 +441,26 @@ export function PatientForm({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="diagnosis_date">
-                  Date de diagnostic <span className="text-destructive">*</span>
+                <Label htmlFor="diagnosis_year">
+                  Année de diagnostic{" "}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="diagnosis_date"
-                  type="date"
-                  {...register("diagnosis_date")}
+                  id="diagnosis_year"
+                  type="number"
+                  min={1900}
+                  max={new Date().getFullYear()}
+                  placeholder="ex. 2020"
+                  {...register("diagnosis_year", {
+                    setValueAs: (v) =>
+                      v === "" || v === null || v === undefined
+                        ? undefined
+                        : parseInt(String(v), 10),
+                  })}
                 />
-                {errors.diagnosis_date && (
+                {errors.diagnosis_year && (
                   <p className="text-sm text-destructive">
-                    {errors.diagnosis_date.message}
+                    {errors.diagnosis_year.message}
                   </p>
                 )}
               </div>
@@ -719,6 +665,20 @@ export function PatientForm({
               : "Remplissez le formulaire en plusieurs étapes pour ajouter un nouveau patient."}
           </DialogDescription>
         </DialogHeader>
+
+        {import.meta.env.DEV && (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs border-dashed border-amber-600/40 text-amber-800 dark:text-amber-400"
+              onClick={fillDevTestData}
+            >
+              Remplir auto (dev)
+            </Button>
+          </div>
+        )}
 
         {/* Stepper */}
         <div className="flex items-center justify-between mb-6">

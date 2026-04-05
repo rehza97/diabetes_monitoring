@@ -1,6 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { query, where, orderBy, Timestamp } from "firebase/firestore";
+import {
+  query,
+  where,
+  orderBy,
+  Timestamp,
+  deleteField,
+} from "firebase/firestore";
+import { subYears } from "date-fns";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { PatientsTable } from "@/components/dashboard/tables/PatientsTable";
@@ -12,26 +19,15 @@ import { PatientForm } from "@/components/dashboard/forms/PatientForm";
 import { BulkActions } from "@/components/dashboard/BulkActions";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { Plus, Download, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
-import { ImportDialog } from "@/components/dashboard/ImportDialog";
 import { usePatients, useUsers } from "@/hooks/useFirestore";
 import {
   patientsCollection,
   usersCollection,
   deletePatient,
 } from "@/lib/firestore-helpers";
-import { exportPatientsToExcel, exportPatientsToCSV } from "@/utils/export";
 import type { FirestorePatient, FirestoreUser } from "@/types/firestore";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 
 // Logging utility
 const logError = (
@@ -79,16 +75,14 @@ export function PatientsManagementPage() {
         date_of_birth: string;
         gender: "male" | "female";
         phone: string;
-        email?: string;
         address?: string;
         diabetes_type: "type1" | "type2" | "gestational";
-        diagnosis_date: string;
+        diagnosis_year: number;
         blood_type?: string;
         weight?: number;
         height?: number;
         doctor_id?: string;
         nurse_id?: string;
-        avatar?: string;
       }
     | undefined
   >();
@@ -100,7 +94,6 @@ export function PatientsManagementPage() {
     doctorId: "all",
     nurseId: "all",
   });
-  const [isImportOpen, setIsImportOpen] = useState(false);
   const { addNotification } = useNotification();
 
   // Component lifecycle logging
@@ -335,22 +328,20 @@ export function PatientsManagementPage() {
         originalPatient.dateOfBirth?.toDate().toISOString().split("T")[0] || "",
       gender: originalPatient.gender,
       phone: originalPatient.phone || "",
-      email: originalPatient.email || "",
       address: originalPatient.address
         ? typeof originalPatient.address === "string"
           ? originalPatient.address
           : JSON.stringify(originalPatient.address)
         : "",
       diabetes_type: originalPatient.diabetesType,
-      diagnosis_date:
-        originalPatient.diagnosisDate?.toDate().toISOString().split("T")[0] ||
-        "",
+      diagnosis_year:
+        originalPatient.diagnosisDate?.toDate().getFullYear() ??
+        new Date().getFullYear(),
       blood_type: originalPatient.bloodType || "",
       weight: originalPatient.weight,
       height: originalPatient.height,
       doctor_id: originalPatient.doctorId || "",
       nurse_id: originalPatient.nurseId || "",
-      avatar: originalPatient.avatar,
     };
 
     console.log("Transformed form patient:", formPatient);
@@ -411,13 +402,21 @@ export function PatientsManagementPage() {
       // Transform form data (snake_case) to Firestore format (camelCase)
       const firstName = data.first_name || data.firstName;
       const lastName = data.last_name || data.lastName;
-      const dateOfBirth = data.date_of_birth || data.dateOfBirth;
+      const age = data.age as number | undefined;
       const gender = data.gender;
-      const phone = data.phone;
-      const email = data.email;
+      const phoneRaw = data.phone != null ? String(data.phone) : "";
+      const phone = phoneRaw.replace(/\s/g, "");
       const address = data.address;
       const diabetesType = data.diabetes_type || data.diabetesType;
-      const diagnosisDate = data.diagnosis_date || data.diagnosisDate;
+      const diagnosisYearRaw =
+        data.diagnosis_year ?? data.diagnosisYear;
+      const diagnosisYear =
+        diagnosisYearRaw !== undefined && diagnosisYearRaw !== null
+          ? Number(diagnosisYearRaw)
+          : NaN;
+      const diagnosisTimestamp = !Number.isNaN(diagnosisYear)
+        ? Timestamp.fromDate(new Date(diagnosisYear, 0, 1))
+        : undefined;
       const bloodType = data.blood_type || data.bloodType;
       const weight = data.weight;
       const height = data.height;
@@ -440,30 +439,39 @@ export function PatientsManagementPage() {
         );
       }
 
+      const ageNum =
+        age !== undefined && !Number.isNaN(age) ? age : undefined;
+      const dateOfBirthTs =
+        ageNum !== undefined
+          ? Timestamp.fromDate(subYears(new Date(), ageNum))
+          : Timestamp.fromDate(subYears(new Date(), 0));
+
       if (editingPatient) {
         logInfo("updatePatient", "Updating patient", {
           patientId: editingPatient.id,
         });
-        await updatePatient(editingPatient.id, {
+        const updatePayload: Record<string, unknown> = {
           firstName,
           lastName,
-          dateOfBirth: dateOfBirth
-            ? Timestamp.fromDate(new Date(dateOfBirth))
-            : undefined,
           gender,
           phone,
-          email,
+          email: deleteField(),
           address,
           diabetesType,
-          diagnosisDate: diagnosisDate
-            ? Timestamp.fromDate(new Date(diagnosisDate))
-            : undefined,
+          diagnosisDate: diagnosisTimestamp,
           bloodType,
           weight,
           height,
           doctorId,
           nurseId,
-        });
+        };
+        if (ageNum !== undefined) {
+          updatePayload.dateOfBirth = dateOfBirthTs;
+        }
+        await updatePatient(
+          editingPatient.id,
+          updatePayload as unknown as Parameters<typeof updatePatient>[1],
+        );
         logInfo("updatePatient", "Patient updated successfully", {
           patientId: editingPatient.id,
         });
@@ -479,17 +487,13 @@ export function PatientsManagementPage() {
         await createPatient({
           firstName,
           lastName,
-          dateOfBirth: dateOfBirth
-            ? Timestamp.fromDate(new Date(dateOfBirth))
-            : Timestamp.now(),
+          dateOfBirth: dateOfBirthTs,
           gender,
           phone,
-          email,
           address,
           diabetesType,
-          diagnosisDate: diagnosisDate
-            ? Timestamp.fromDate(new Date(diagnosisDate))
-            : Timestamp.now(),
+          diagnosisDate:
+            diagnosisTimestamp ?? Timestamp.fromDate(new Date()),
           bloodType,
           weight,
           height,
@@ -518,53 +522,6 @@ export function PatientsManagementPage() {
         message: `Impossible de ${editingPatient ? "modifier" : "créer"} le patient: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
       });
     }
-  };
-
-  const handleExport = (format: "excel" | "csv" = "excel") => {
-    try {
-      // Handle case where event object is passed instead of format string
-      const exportFormat = typeof format === "string" ? format : "excel";
-
-      logInfo("exportPatients", "Exporting patients", {
-        format: exportFormat,
-        count: filteredPatients.length,
-      });
-      const patientsToExport = filteredPatients
-        .map((p) => {
-          const originalPatient = patients?.find((pat) => pat.id === p.id);
-          return originalPatient || null;
-        })
-        .filter((p): p is FirestorePatient => p !== null);
-
-      if (exportFormat === "excel") {
-        exportPatientsToExcel(patientsToExport);
-      } else {
-        exportPatientsToCSV(patientsToExport);
-      }
-      logInfo("exportPatients", "Export completed successfully", {
-        format: exportFormat,
-      });
-      addNotification({
-        type: "success",
-        title: "Export réussi",
-        message: `Les patients ont été exportés en format ${exportFormat.toUpperCase()}.`,
-      });
-    } catch (error) {
-      logError("exportPatients", error, { format });
-      addNotification({
-        type: "error",
-        title: "Erreur d'export",
-        message: `Impossible d'exporter les données: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
-      });
-    }
-  };
-
-  const handleExportClick = () => {
-    handleExport("excel");
-  };
-
-  const handleImport = () => {
-    setIsImportOpen(true);
   };
 
   const handleBulkDelete = async () => {
@@ -639,14 +596,6 @@ export function PatientsManagementPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={handleImport}>
-              <Upload className="mr-2 h-4 w-4" />
-              Importer
-            </Button>
-            <Button variant="outline" onClick={handleExportClick}>
-              <Download className="mr-2 h-4 w-4" />
-              Exporter
-            </Button>
             <Button onClick={handleAddPatient}>
               <Plus className="mr-2 h-4 w-4" />
               Ajouter un patient
@@ -664,9 +613,7 @@ export function PatientsManagementPage() {
         {selectedIds.length > 0 && (
           <BulkActions
             selectedCount={selectedIds.length}
-            onExport={handleExportClick}
             onDelete={handleBulkDelete}
-            exportLabel="Exporter les patients sélectionnés"
             deleteLabel="Supprimer les patients sélectionnés"
           />
         )}
@@ -689,51 +636,6 @@ export function PatientsManagementPage() {
           }}
           onSubmit={handleFormSubmit}
         />
-
-        {/* Import Dialog */}
-        <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Importer des patients</DialogTitle>
-              <DialogDescription>
-                Téléchargez un fichier Excel avec les données des patients.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="import-file">Fichier Excel</Label>
-                <Input id="import-file" type="file" accept=".xlsx,.xls" />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                <p>Format attendu :</p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Prénom, Nom, Date de naissance, Sexe, Téléphone</li>
-                  <li>Type de diabète, Date de diagnostic</li>
-                  <li>
-                    Optionnel : Email, Adresse, Groupe sanguin, Poids, Taille
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => setIsImportOpen(false)}>
-                Annuler
-              </Button>
-              <Button
-                onClick={() => {
-                  addNotification({
-                    type: "info",
-                    title: "Import en cours",
-                    message: "Le fichier est en cours de traitement...",
-                  });
-                  setIsImportOpen(false);
-                }}
-              >
-                Importer
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

@@ -56,7 +56,10 @@ Future<Uint8List> exportPatientReportToPDF({
               _buildTableRow('Numéro de dossier', patient.fileNumber),
               _buildTableRow('Date de naissance', _formatDate(patient.dateOfBirth)),
               _buildTableRow('Type de diabète', _diabetesTypeLabel(patient.diabetesType)),
-              _buildTableRow('Date de diagnostic', _formatDate(patient.diagnosisDate)),
+              _buildTableRow(
+                'Année de diagnostic',
+                '${patient.diagnosisDate.toDate().year}',
+              ),
               if (patient.phone.isNotEmpty)
                 _buildTableRow('Téléphone', patient.phone),
               if (patient.email != null && patient.email!.isNotEmpty)

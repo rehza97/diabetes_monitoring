@@ -55,9 +55,23 @@ export function Header() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isAuthenticated, globalSearchOpen]);
 
-  // Pour la landing page, utiliser NavigationMenu
-  if (isLandingPage && !isAuthenticated) {
-    return <NavigationMenu />;
+  // Pour la landing page, toujours utiliser NavigationMenu (même connecté)
+  if (isLandingPage) {
+    const handleLogout = async () => {
+      try {
+        await logout();
+      } finally {
+        navigate("/");
+      }
+    };
+
+    return (
+      <NavigationMenu
+        isAuthenticated={isAuthenticated}
+        onLogout={handleLogout}
+        dashboardPath="/dashboard"
+      />
+    );
   }
 
   // Header simple pour pages publiques non-landing

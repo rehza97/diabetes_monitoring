@@ -5,7 +5,7 @@ import '../../../models/patient.dart';
 import '../../../models/user.dart';
 import '../../../utils/validators.dart';
 
-/// Emitted form data: camelCase keys. Dates as [DateTime]; parent converts to [Timestamp].
+/// Emitted form data: camelCase keys. [age] is int; [diagnosisYear] is int (stored as Jan 1 of that year).
 /// Optional fields may be omitted when empty.
 typedef PatientFormData = Map<String, dynamic>;
 
@@ -36,16 +36,15 @@ class _PatientFormState extends State<PatientForm> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _ageController = TextEditingController();
   final _addressController = TextEditingController();
   final _bloodTypeController = TextEditingController();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
+  final _diagnosisYearController = TextEditingController();
 
   String _gender = 'male';
   DiabetesType _diabetesType = DiabetesType.type2;
-  DateTime? _dateOfBirth;
-  DateTime? _diagnosisDate;
   String? _nurseId;
 
   static const _noneId = 'none';
@@ -67,23 +66,24 @@ class _PatientFormState extends State<PatientForm> {
     if (p == null) {
       _gender = 'male';
       _diabetesType = DiabetesType.type2;
-      _dateOfBirth = null;
-      _diagnosisDate = null;
+      _ageController.clear();
+      _diagnosisYearController.clear();
       _nurseId = _noneId;
       return;
     }
     _firstNameController.text = p.firstName;
     _lastNameController.text = p.lastName;
     _phoneController.text = p.phone;
-    _emailController.text = p.email ?? '';
+    _ageController.text =
+        '${completedYearsFromBirthDate(p.dateOfBirth.toDate())}';
     _addressController.text = p.address?.street ?? '';
     _bloodTypeController.text = p.bloodType ?? '';
     _weightController.text = p.weight != null ? p.weight!.toString() : '';
     _heightController.text = p.height != null ? p.height!.toString() : '';
     _gender = p.gender;
     _diabetesType = p.diabetesType;
-    _dateOfBirth = p.dateOfBirth.toDate();
-    _diagnosisDate = p.diagnosisDate.toDate();
+    _diagnosisYearController.text =
+        '${p.diagnosisDate.toDate().year}';
     final nurseIds = widget.nurses.map((u) => u.id).toSet();
     _nurseId = p.nurseId != null &&
             p.nurseId!.isNotEmpty &&
@@ -97,46 +97,29 @@ class _PatientFormState extends State<PatientForm> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
+    _ageController.dispose();
     _addressController.dispose();
     _bloodTypeController.dispose();
     _weightController.dispose();
     _heightController.dispose();
+    _diagnosisYearController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickDate(BuildContext context, bool isDiagnosis) async {
-    final initial = isDiagnosis ? _diagnosisDate : _dateOfBirth;
-    final first = DateTime(1900);
-    final last = isDiagnosis ? DateTime.now() : DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial ?? DateTime.now(),
-      firstDate: first,
-      lastDate: last,
-    );
-    if (picked == null || !mounted) return;
-    setState(() {
-      if (isDiagnosis) {
-        _diagnosisDate = picked;
-      } else {
-        _dateOfBirth = picked;
-      }
-    });
   }
 
   PatientFormData _collectData() {
     final address = _addressController.text.trim();
+    final ageParsed = int.tryParse(_ageController.text.trim());
+    final diagnosisYearParsed =
+        int.tryParse(_diagnosisYearController.text.trim());
     return {
       'firstName': _firstNameController.text.trim(),
       'lastName': _lastNameController.text.trim(),
-      'dateOfBirth': _dateOfBirth,
+      'age': ageParsed,
       'gender': _gender,
       'phone': _phoneController.text.trim().replaceAll(RegExp(r'\s'), ''),
-      'email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
       'address': address.isEmpty ? null : address,
       'diabetesType': _diabetesType,
-      'diagnosisDate': _diagnosisDate,
+      'diagnosisYear': diagnosisYearParsed,
       'bloodType': _bloodTypeController.text.trim().isEmpty ? null : _bloodTypeController.text.trim(),
       'weight': _parseDouble(_weightController.text),
       'height': _parseDouble(_heightController.text),
@@ -152,30 +135,27 @@ class _PatientFormState extends State<PatientForm> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    if (_dateOfBirth == null) {
+    final y = int.tryParse(_diagnosisYearController.text.trim());
+    if (y == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Date de naissance requise')),
+        const SnackBar(content: Text('Année de diagnostic requise')),
       );
       return;
     }
-    if (_diagnosisDate == null) {
+    final nowY = DateTime.now().year;
+    if (y < 1900 || y > nowY) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Date de diagnostic requise')),
-      );
-      return;
-    }
-    if (!isDateNotInFuture(_diagnosisDate)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La date de diagnostic ne peut pas être dans le futur')),
+        SnackBar(
+          content: Text(
+            y > nowY
+                ? 'L\'année ne peut pas être dans le futur.'
+                : 'Année invalide (minimum 1900).',
+          ),
+        ),
       );
       return;
     }
     widget.onSubmit(_collectData());
-  }
-
-  String _formatDate(DateTime? d) {
-    if (d == null) return '';
-    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
 
   @override
@@ -233,23 +213,22 @@ class _PatientFormState extends State<PatientForm> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  InkWell(
-                    onTap: () => _pickDate(context, false),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Date de naissance *',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      child: Text(
-                        _formatDate(_dateOfBirth),
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: _dateOfBirth == null
-                              ? theme.colorScheme.onSurfaceVariant
-                              : theme.colorScheme.onSurface,
-                        ),
-                      ),
+                  TextFormField(
+                    controller: _ageController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Âge (optionnel)',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.cake_outlined),
                     ),
+                    validator: (v) {
+                      final t = (v ?? '').trim();
+                      if (t.isEmpty) return null;
+                      final n = int.tryParse(t);
+                      if (n == null) return 'Nombre entier requis.';
+                      if (n < 0 || n > 120) return 'Âge entre 0 et 120.';
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   InputDecorator(
@@ -274,30 +253,17 @@ class _PatientFormState extends State<PatientForm> {
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     decoration: const InputDecoration(
-                      labelText: 'Téléphone *',
+                      labelText: 'Téléphone (optionnel)',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.phone_outlined),
                     ),
                     validator: (v) {
                       final t = (v ?? '').trim().replaceAll(RegExp(r'\s'), '');
-                      if (t.isEmpty) return 'Téléphone requis.';
-                      if (!isValidFrenchPhone(t)) return 'Numéro invalide (ex. 0612345678 ou +33612345678).';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email (optionnel)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                    validator: (v) {
-                      final t = (v ?? '').trim();
                       if (t.isEmpty) return null;
-                      return isValidEmail(t) ? null : 'Email invalide.';
+                      if (!isValidFrenchPhone(t)) {
+                        return 'Numéro invalide (ex. 0612345678 ou +33612345678).';
+                      }
+                      return null;
                     },
                   ),
                   const SizedBox(height: 16),
@@ -336,23 +302,25 @@ class _PatientFormState extends State<PatientForm> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  InkWell(
-                    onTap: () => _pickDate(context, true),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Date de diagnostic *',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      child: Text(
-                        _formatDate(_diagnosisDate),
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: _diagnosisDate == null
-                              ? theme.colorScheme.onSurfaceVariant
-                              : theme.colorScheme.onSurface,
-                        ),
-                      ),
+                  TextFormField(
+                    controller: _diagnosisYearController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Année de diagnostic *',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.calendar_today),
                     ),
+                    validator: (v) {
+                      final t = (v ?? '').trim();
+                      if (t.isEmpty) return 'Année requise.';
+                      final n = int.tryParse(t);
+                      if (n == null) return 'Nombre entier requis.';
+                      if (n < 1900) return 'Minimum 1900.';
+                      if (n > DateTime.now().year) {
+                        return 'Pas dans le futur.';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   TextFormField(

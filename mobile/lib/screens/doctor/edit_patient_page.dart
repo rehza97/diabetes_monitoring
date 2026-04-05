@@ -7,6 +7,7 @@ import '../../data/user_repository.dart';
 import '../../models/enums.dart';
 import '../../models/patient.dart';
 import '../../models/user.dart';
+import '../../utils/validators.dart';
 import 'widgets/patient_form.dart';
 
 class DoctorEditPatientPage extends StatefulWidget {
@@ -102,16 +103,17 @@ class _DoctorEditPatientPageState extends State<DoctorEditPatientPage> {
 
     setState(() => _submitting = true);
     try {
-      final dob = data['dateOfBirth'] as DateTime?;
-      final diag = data['diagnosisDate'] as DateTime?;
-      if (dob == null || diag == null) {
+      final age = data['age'] as int?;
+      final diagnosisYear = data['diagnosisYear'] as int?;
+      if (diagnosisYear == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Date de naissance et date de diagnostic requises')),
+          const SnackBar(content: Text('Année de diagnostic requise')),
         );
         setState(() => _submitting = false);
         return;
       }
+      final diagnosisDate = DateTime(diagnosisYear, 1, 1);
 
       final addressRaw = data['address'] as String?;
       PatientAddress? address;
@@ -122,17 +124,20 @@ class _DoctorEditPatientPageState extends State<DoctorEditPatientPage> {
       final partial = <String, dynamic>{
         'firstName': data['firstName'] as String,
         'lastName': data['lastName'] as String,
-        'dateOfBirth': Timestamp.fromDate(dob),
         'gender': data['gender'] as String,
-        'phone': data['phone'] as String,
+        'phone': (data['phone'] as String?) ?? '',
         'diabetesType': (data['diabetesType'] as DiabetesType).name,
-        'diagnosisDate': Timestamp.fromDate(diag),
-        if (data['email'] != null) 'email': data['email'] as String?,
+        'diagnosisDate': Timestamp.fromDate(diagnosisDate),
+        'email': FieldValue.delete(),
         if (address != null) 'address': address.toMap(),
         if (data['bloodType'] != null) 'bloodType': data['bloodType'] as String?,
         if (data['weight'] != null) 'weight': data['weight'] as double?,
         if (data['height'] != null) 'height': data['height'] as double?,
       };
+      if (age != null) {
+        partial['dateOfBirth'] =
+            Timestamp.fromDate(approximateDobFromAge(age));
+      }
       final nid = data['nurseId'] as String?;
       if (nid != null && nid.isNotEmpty) {
         partial['nurseId'] = nid;

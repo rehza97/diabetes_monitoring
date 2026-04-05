@@ -7,6 +7,7 @@ import '../../data/user_repository.dart';
 import '../../models/enums.dart';
 import '../../models/patient.dart';
 import '../../models/user.dart';
+import '../../utils/validators.dart';
 import 'widgets/patient_form.dart';
 
 class DoctorAddPatientPage extends StatefulWidget {
@@ -71,16 +72,18 @@ class _DoctorAddPatientPageState extends State<DoctorAddPatientPage> {
 
     setState(() => _submitting = true);
     try {
-      final dob = data['dateOfBirth'] as DateTime?;
-      final diag = data['diagnosisDate'] as DateTime?;
-      if (dob == null || diag == null) {
+      final age = data['age'] as int?;
+      final diagnosisYear = data['diagnosisYear'] as int?;
+      if (diagnosisYear == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Date de naissance et date de diagnostic requises')),
+          const SnackBar(content: Text('Année de diagnostic requise')),
         );
         setState(() => _submitting = false);
         return;
       }
+      final dob = approximateDobFromAge(age ?? 0);
+      final diagnosisDate = DateTime(diagnosisYear, 1, 1);
 
       final addressRaw = data['address'] as String?;
       PatientAddress? address;
@@ -93,11 +96,10 @@ class _DoctorAddPatientPageState extends State<DoctorAddPatientPage> {
         lastName: data['lastName'] as String,
         dateOfBirth: Timestamp.fromDate(dob),
         gender: data['gender'] as String,
-        phone: data['phone'] as String,
+        phone: (data['phone'] as String?) ?? '',
         diabetesType: data['diabetesType'] as DiabetesType,
-        diagnosisDate: Timestamp.fromDate(diag),
+        diagnosisDate: Timestamp.fromDate(diagnosisDate),
         doctorId: uid,
-        email: data['email'] as String?,
         address: address,
         bloodType: data['bloodType'] as String?,
         weight: data['weight'] as double?,

@@ -27,3 +27,20 @@ final RegExp timeHHmmRegex = RegExp(r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$');
 
 bool isValidTimeHHmm(String? v) =>
     v != null && v.trim().isNotEmpty && timeHHmmRegex.hasMatch(v.trim());
+
+/// Completed years since [birthDate] (aligned with the web app's age calculation).
+int completedYearsFromBirthDate(DateTime birthDate) {
+  final today = DateTime.now();
+  var age = today.year - birthDate.year;
+  final monthDiff = today.month - birthDate.month;
+  if (monthDiff < 0 || (monthDiff == 0 && today.day < birthDate.day)) {
+    age--;
+  }
+  return age;
+}
+
+/// Birth date to store when the user only entered an age (same day/month as today).
+DateTime approximateDobFromAge(int age) {
+  final now = DateTime.now();
+  return DateTime(now.year - age, now.month, now.day);
+}

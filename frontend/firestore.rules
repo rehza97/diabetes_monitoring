@@ -92,8 +92,13 @@ service cloud.firestore {
       );
       
       allow update: if isAuthenticated() && (
+        // Admin can تحديث كل شيء كالمعتاد
         isAdmin() || 
-        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'avatar', 'phone', 'lastLogin', 'firstName', 'lastName', 'updatedAt']))
+        // المالك يمكنه تعديل بياناته الشخصية فقط
+        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'avatar', 'phone', 'lastLogin', 'firstName', 'lastName', 'updatedAt'])) ||
+        // سماح مؤقت: الأطباء والممرضات يمكنهم فقط تعديل حقل الدور role
+        ((isDoctor() || isNurse()) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'updatedAt']))
       );
       
       allow delete: if isAdmin();

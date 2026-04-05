@@ -131,7 +131,6 @@ class CreatePatientDto {
     required this.diabetesType,
     required this.diagnosisDate,
     required this.doctorId,
-    this.email,
     this.address,
     this.bloodType,
     this.weight,
@@ -152,7 +151,6 @@ class CreatePatientDto {
   final DiabetesType diabetesType;
   final Timestamp diagnosisDate;
   final String doctorId;
-  final String? email;
   final PatientAddress? address;
   final String? bloodType;
   final double? weight;
@@ -173,7 +171,6 @@ class CreatePatientDto {
         'diabetesType': diabetesType.name,
         'diagnosisDate': diagnosisDate,
         'doctorId': doctorId,
-        if (email != null) 'email': email,
         if (address != null) 'address': address!.toMap(),
         if (bloodType != null) 'bloodType': bloodType,
         if (weight != null) 'weight': weight,

@@ -74,7 +74,7 @@ export const createPatientSchema = z.object({
   lastName: z.string().min(1).max(100),
   dateOfBirth: z.any(), // Timestamp
   gender: genderSchema,
-  phone: z.string().min(1),
+  phone: z.string(),
   email: z.string().email().optional(),
   address: patientAddressSchema.optional(),
   diabetesType: diabetesTypeSchema,

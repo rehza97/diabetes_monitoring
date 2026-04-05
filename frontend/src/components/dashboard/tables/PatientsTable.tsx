@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Edit, Trash2, Eye, FileText } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Inbox } from "lucide-react";
 import { getInitials, formatFullName, getReadingStatus } from "@/utils/helpers";
@@ -240,10 +240,6 @@ export function PatientsTable({
                           Modifier
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Générer rapport
-                      </DropdownMenuItem>
                       {onDelete && (
                         <>
                           <DropdownMenuSeparator />

@@ -464,6 +464,7 @@ export interface CreateFirestorePatientDto {
   lastName: string;
   dateOfBirth: Timestamp;
   gender: "male" | "female";
+  /** Empty string when the patient has no phone. */
   phone: string;
   email?: string;
   address?: PatientAddress;
