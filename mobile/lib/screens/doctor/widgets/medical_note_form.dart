@@ -155,7 +155,7 @@ class _MedicalNoteFormState extends State<MedicalNoteForm> {
               DropdownButtonFormField<MedicalNoteType>(
                 value: _noteType,
                 decoration: const InputDecoration(
-                  labelText: 'Type de note *',
+                  labelText: 'Type de note',
                   border: OutlineInputBorder(),
                 ),
                 items: MedicalNoteType.values.map((type) {
@@ -174,15 +174,13 @@ class _MedicalNoteFormState extends State<MedicalNoteForm> {
               TextFormField(
                 controller: _contentController,
                 decoration: const InputDecoration(
-                  labelText: 'Contenu *',
+                  labelText: 'Contenu',
                   border: OutlineInputBorder(),
                   alignLabelWithHint: true,
                 ),
                 maxLines: 6,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Le contenu est requis';
-                  }
+                  if (v == null || v.trim().isEmpty) return null;
                   return null;
                 },
               ),

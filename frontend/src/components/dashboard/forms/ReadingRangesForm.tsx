@@ -169,7 +169,7 @@ export function ReadingRangesForm() {
               <Input
                 id="normal_min"
                 type="number"
-                {...register("normal_min", { valueAsNumber: true, required: true })}
+                {...register("normal_min", { valueAsNumber: true })}
               />
             </div>
             <div>
@@ -177,7 +177,7 @@ export function ReadingRangesForm() {
               <Input
                 id="normal_max"
                 type="number"
-                {...register("normal_max", { valueAsNumber: true, required: true })}
+                {...register("normal_max", { valueAsNumber: true })}
               />
             </div>
           </CardContent>
@@ -193,7 +193,7 @@ export function ReadingRangesForm() {
               <Input
                 id="warning_min"
                 type="number"
-                {...register("warning_min", { valueAsNumber: true, required: true })}
+                {...register("warning_min", { valueAsNumber: true })}
               />
             </div>
             <div>
@@ -201,7 +201,7 @@ export function ReadingRangesForm() {
               <Input
                 id="warning_max"
                 type="number"
-                {...register("warning_max", { valueAsNumber: true, required: true })}
+                {...register("warning_max", { valueAsNumber: true })}
               />
             </div>
           </CardContent>

@@ -419,18 +419,6 @@ export function UsersManagementPage() {
         });
       } else {
         // Create new user using Cloud Function
-        if (!data.password) {
-          logError("createUser", new Error("Password is required"), {
-            email: data.email,
-          });
-          addNotification({
-            type: "error",
-            title: "Erreur",
-            message: "Le mot de passe est requis pour créer un utilisateur.",
-          });
-          return;
-        }
-
         // Map form data (snake_case) to API format (camelCase)
         const firstName = data.first_name || data.firstName;
         const lastName = data.last_name || data.lastName;
@@ -450,7 +438,7 @@ export function UsersManagementPage() {
         });
         const result = await createUserWithAuth({
           email,
-          password: data.password,
+          password: data.password || "",
           firstName,
           lastName,
           phone,

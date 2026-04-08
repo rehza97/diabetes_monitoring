@@ -16,10 +16,30 @@ export const passwordSchema = z
   .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
   .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre");
 
+const optionalText = () => z.string().optional().or(z.literal(""));
+
+const optionalTextMin = (min: number, message: string) =>
+  optionalText().refine(
+    (value) => !value || value.trim().length >= min,
+    message,
+  );
+
+const optionalEmail = () =>
+  optionalText().refine(
+    (value) => !value || emailSchema.safeParse(value).success,
+    "Email invalide",
+  );
+
+const optionalPassword = () =>
+  optionalText().refine(
+    (value) => !value || passwordSchema.safeParse(value).success,
+    "Mot de passe invalide",
+  );
+
 // Login form validation
 export const loginSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1, "Le mot de passe est requis"),
+  email: optionalEmail(),
+  password: optionalText(),
 });
 
 // Reading value validation
@@ -31,10 +51,9 @@ export const readingValueSchema = z
 // Date validation
 export const dateSchema = z
   .string()
-  .min(1, "La date est requise")
   .refine(
     (date) => {
-      if (!date || date === "") return false;
+      if (!date || date === "") return true;
       const parsed = new Date(date);
       return !isNaN(parsed.getTime());
     },
@@ -43,16 +62,24 @@ export const dateSchema = z
 
 // User form validation
 export const createUserSchema = z.object({
-  first_name: z
+  first_name: optionalTextMin(
+    2,
+    "Le prénom doit contenir au moins 2 caractères",
+  ),
+  last_name: optionalTextMin(2, "Le nom doit contenir au moins 2 caractères"),
+  email: optionalEmail(),
+  phone: z
     .string()
-    .min(2, "Le prénom doit contenir au moins 2 caractères"),
-  last_name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-  email: emailSchema,
-  phone: phoneSchema.optional(),
-  password: passwordSchema,
-  role: z.enum(["admin", "doctor", "nurse"]),
-  specialization: z.string().optional(),
-  license_number: z.string().optional(),
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (value) => !value || phoneSchema.safeParse(value).success,
+      "Numéro de téléphone invalide",
+    ),
+  password: optionalPassword(),
+  role: z.enum(["admin", "doctor", "nurse"]).optional(),
+  specialization: optionalText(),
+  license_number: optionalText(),
   is_active: z.boolean().optional(),
 });
 
@@ -68,10 +95,11 @@ const patientPhoneSchema = z
 // Patient form validation
 export const createPatientSchema = z
   .object({
-    first_name: z
-      .string()
-      .min(2, "Le prénom doit contenir au moins 2 caractères"),
-    last_name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+    first_name: optionalTextMin(
+      2,
+      "Le prénom doit contenir au moins 2 caractères",
+    ),
+    last_name: optionalTextMin(2, "Le nom doit contenir au moins 2 caractères"),
     age: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) return undefined;
       if (typeof val === "number" && !isNaN(val)) return val;
@@ -79,14 +107,18 @@ export const createPatientSchema = z
         typeof val === "string" ? parseInt(val, 10) : Number(val);
       return isNaN(num) ? undefined : num;
     }, z.number().int().min(0, "L'âge doit être au moins 0").max(120, "L'âge est trop élevé").optional()),
-    gender: z.enum(["male", "female"], {
-      message: "Veuillez sélectionner un sexe",
-    }),
-    phone: patientPhoneSchema,
+    gender: z
+      .enum(["male", "female"], {
+        message: "Veuillez sélectionner un sexe",
+      })
+      .optional(),
+    phone: patientPhoneSchema.optional().or(z.literal("")),
     address: z.string().optional().or(z.literal("")),
-    diabetes_type: z.enum(["type1", "type2", "gestational"], {
-      message: "Veuillez sélectionner un type de diabète",
-    }),
+    diabetes_type: z
+      .enum(["type1", "type2", "gestational"], {
+        message: "Veuillez sélectionner un type de diabète",
+      })
+      .optional(),
     diagnosis_year: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) return undefined;
       if (typeof val === "number" && !isNaN(val)) return val;
@@ -95,7 +127,7 @@ export const createPatientSchema = z
       return isNaN(num) ? undefined : num;
     }, z.number().int().min(1900, "Année invalide").refine((y) => y <= new Date().getFullYear(), {
       message: "L'année ne peut pas être dans le futur",
-    })),
+    }).optional()),
     blood_type: z.string().optional().or(z.literal("")),
     weight: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) return undefined;
@@ -111,64 +143,57 @@ export const createPatientSchema = z
     }, z.number().positive().optional()),
     doctor_id: z.string().optional().or(z.literal("")),
     nurse_id: z.string().optional().or(z.literal("")),
-  })
-  .refine(
-    (data) => {
-      // At least one of doctor_id or nurse_id must be provided (not empty and not "none")
-      const hasDoctor =
-        data.doctor_id && data.doctor_id !== "" && data.doctor_id !== "none";
-      const hasNurse =
-        data.nurse_id && data.nurse_id !== "" && data.nurse_id !== "none";
-      return hasDoctor || hasNurse;
-    },
-    {
-      message: "Au moins un médecin ou une infirmière doit être assigné",
-      path: ["doctor_id"], // This will show the error on doctor_id field
-    },
-  );
+  });
 
 // Reading form validation
 export const createReadingSchema = z.object({
-  patient_id: z.string().min(1, "Le patient est requis"),
-  value: readingValueSchema,
-  unit: z.enum(["mg/dL", "mmol/L"]),
-  reading_type: z.enum([
-    "fasting",
-    "post_breakfast",
-    "pre_lunch",
-    "post_lunch",
-    "pre_dinner",
-    "post_dinner",
-    "bedtime",
-    "midnight",
-    "random",
-  ]),
-  date: dateSchema,
-  time: z
-    .string()
-    .regex(
-      /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
-      "Format d'heure invalide (HH:mm)",
-    ),
+  patient_id: optionalText(),
+  value: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? undefined : val),
+    readingValueSchema.optional(),
+  ),
+  unit: z.enum(["mg/dL", "mmol/L"]).optional(),
+  reading_type: z
+    .enum([
+      "fasting",
+      "post_breakfast",
+      "pre_lunch",
+      "post_lunch",
+      "pre_dinner",
+      "post_dinner",
+      "bedtime",
+      "midnight",
+      "random",
+    ])
+    .optional(),
+  date: dateSchema.optional().or(z.literal("")),
+  time: optionalText().refine(
+    (value) =>
+      !value ||
+      /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value),
+    "Format d'heure invalide (HH:mm)",
+  ),
   notes: z.string().optional(),
 });
 
 // Medical Note form validation
 export const createMedicalNoteSchema = z.object({
-  noteType: z.enum(["diagnosis", "prescription", "observation", "followup"], {
-    message: "Veuillez sélectionner un type de note",
-  }),
-  content: z.string().min(1, "Le contenu est requis"),
+  noteType: z
+    .enum(["diagnosis", "prescription", "observation", "followup"], {
+      message: "Veuillez sélectionner un type de note",
+    })
+    .optional(),
+  content: optionalText(),
   isImportant: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
 });
 
 // Medication form validation
 export const createMedicationSchema = z.object({
-  medicationName: z.string().min(1, "Le nom du médicament est requis"),
-  dosage: z.string().min(1, "Le dosage est requis"),
-  frequency: z.string().min(1, "La fréquence est requise"),
-  startDate: dateSchema,
+  medicationName: optionalText(),
+  dosage: optionalText(),
+  frequency: optionalText(),
+  startDate: dateSchema.optional().or(z.literal("")),
   endDate: dateSchema.optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
 });

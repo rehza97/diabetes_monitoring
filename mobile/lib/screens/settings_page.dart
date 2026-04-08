@@ -285,8 +285,7 @@ class _SettingsPageState extends State<SettingsPage> {
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.person_outline),
           ),
-          validator: (v) =>
-              (v == null || v.trim().isEmpty) ? 'Prénom requis.' : null,
+          validator: (_) => null,
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 16),
@@ -297,8 +296,7 @@ class _SettingsPageState extends State<SettingsPage> {
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.person_outline),
           ),
-          validator: (v) =>
-              (v == null || v.trim().isEmpty) ? 'Nom requis.' : null,
+          validator: (_) => null,
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 16),

@@ -179,13 +179,13 @@ class _PatientFormState extends State<PatientForm> {
                   TextFormField(
                     controller: _firstNameController,
                     decoration: const InputDecoration(
-                      labelText: 'Prénom *',
+                      labelText: 'Prénom',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.person_outline),
                     ),
                     validator: (v) {
                       final t = (v ?? '').trim();
-                      if (t.isEmpty) return 'Prénom requis.';
+                      if (t.isEmpty) return null;
                       if (t.length < 2) return 'Au moins 2 caractères.';
                       return null;
                     },
@@ -194,13 +194,13 @@ class _PatientFormState extends State<PatientForm> {
                   TextFormField(
                     controller: _lastNameController,
                     decoration: const InputDecoration(
-                      labelText: 'Nom *',
+                      labelText: 'Nom',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.person_outline),
                     ),
                     validator: (v) {
                       final t = (v ?? '').trim();
-                      if (t.isEmpty) return 'Nom requis.';
+                      if (t.isEmpty) return null;
                       if (t.length < 2) return 'Au moins 2 caractères.';
                       return null;
                     },
@@ -227,7 +227,7 @@ class _PatientFormState extends State<PatientForm> {
                   const SizedBox(height: 16),
                   InputDecorator(
                     decoration: const InputDecoration(
-                      labelText: 'Sexe *',
+                      labelText: 'Sexe',
                       border: OutlineInputBorder(),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -279,7 +279,7 @@ class _PatientFormState extends State<PatientForm> {
                   const SizedBox(height: 16),
                   InputDecorator(
                     decoration: const InputDecoration(
-                      labelText: 'Type de diabète *',
+                      labelText: 'Type de diabète',
                       border: OutlineInputBorder(),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -300,7 +300,7 @@ class _PatientFormState extends State<PatientForm> {
                     controller: _diagnosisYearController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'Année de diagnostic *',
+                      labelText: 'Année de diagnostic',
                       hintText:
                           '1900–${DateTime.now().year}',
                       border: const OutlineInputBorder(),
@@ -308,9 +308,7 @@ class _PatientFormState extends State<PatientForm> {
                     ),
                     validator: (v) {
                       final t = (v ?? '').trim();
-                      if (t.isEmpty) {
-                        return 'Année de diagnostic requise';
-                      }
+                      if (t.isEmpty) return null;
                       final n = int.tryParse(t);
                       if (n == null) return 'Nombre entier requis.';
                       if (n < 1900) return 'Année invalide';

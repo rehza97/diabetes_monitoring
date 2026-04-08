@@ -31,20 +31,31 @@ import { cn } from "@/lib/utils";
 import { Timestamp } from "firebase/firestore";
 
 const createScheduledReadingSchema = z.object({
-  patientId: z.string().min(1, "Le patient est requis"),
-  readingType: z.enum([
-    "fasting",
-    "post_breakfast",
-    "pre_lunch",
-    "post_lunch",
-    "pre_dinner",
-    "post_dinner",
-    "bedtime",
-    "midnight",
-    "random",
-  ]),
-  scheduledDate: z.string().min(1, "La date est requise"),
-  scheduledTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:mm)"),
+  patientId: z.string().optional().or(z.literal("")),
+  readingType: z
+    .enum([
+      "fasting",
+      "post_breakfast",
+      "pre_lunch",
+      "post_lunch",
+      "pre_dinner",
+      "post_dinner",
+      "bedtime",
+      "midnight",
+      "random",
+    ])
+    .optional(),
+  scheduledDate: z.string().optional().or(z.literal("")),
+  scheduledTime: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (value) =>
+        !value ||
+        /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value),
+      "Format d'heure invalide (HH:mm)",
+    ),
   notes: z.string().optional(),
 });
 
@@ -169,7 +180,7 @@ export function ScheduledReadingForm({
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="patientId">
-              Patient <span className="text-destructive">*</span>
+              Patient
             </Label>
             <Select
               value={watch("patientId") || ""}
@@ -201,7 +212,7 @@ export function ScheduledReadingForm({
 
           <div className="space-y-2">
             <Label htmlFor="readingType">
-              Type de mesure <span className="text-destructive">*</span>
+              Type de mesure
             </Label>
             <Select
               value={watch("readingType") || "random"}
@@ -226,7 +237,7 @@ export function ScheduledReadingForm({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="scheduledDate">
-                Date prévue <span className="text-destructive">*</span>
+                Date prévue
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -266,7 +277,7 @@ export function ScheduledReadingForm({
 
             <div className="space-y-2">
               <Label htmlFor="scheduledTime">
-                Heure prévue <span className="text-destructive">*</span>
+                Heure prévue
               </Label>
               <div className="flex items-center gap-2">
                 <Input

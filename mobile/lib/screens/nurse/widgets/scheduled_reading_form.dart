@@ -200,7 +200,8 @@ class _ScheduledReadingFormState extends State<ScheduledReadingForm> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedPatientId == null) {
+    final patientId = _selectedPatientId ?? (_patients.isNotEmpty ? _patients.first.id : null);
+    if (patientId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez sélectionner un patient')),
       );
@@ -224,7 +225,7 @@ class _ScheduledReadingFormState extends State<ScheduledReadingForm> {
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       );
 
-      await createScheduledReading(_selectedPatientId!, dto);
+      await createScheduledReading(patientId, dto);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Planning créé')),
@@ -320,7 +321,7 @@ class _ScheduledReadingFormState extends State<ScheduledReadingForm> {
               DropdownButtonFormField<String>(
                 value: _selectedPatientId,
                 decoration: const InputDecoration(
-                  labelText: 'Patient *',
+                  labelText: 'Patient',
                   border: OutlineInputBorder(),
                 ),
                 items: _patients.map((p) {
@@ -331,13 +332,12 @@ class _ScheduledReadingFormState extends State<ScheduledReadingForm> {
                   );
                 }).toList(),
                 onChanged: (value) => setState(() => _selectedPatientId = value),
-                validator: (v) => v == null ? 'Patient requis' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<ReadingType>(
                 value: _readingType,
                 decoration: const InputDecoration(
-                  labelText: 'Type de mesure *',
+                  labelText: 'Type de mesure',
                   border: OutlineInputBorder(),
                 ),
                 items: ReadingType.values.map((type) {
@@ -358,7 +358,7 @@ class _ScheduledReadingFormState extends State<ScheduledReadingForm> {
                   Expanded(
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Date *',
+                        labelText: 'Date',
                         border: OutlineInputBorder(),
                       ),
                       child: InkWell(
@@ -374,7 +374,7 @@ class _ScheduledReadingFormState extends State<ScheduledReadingForm> {
                   Expanded(
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Heure *',
+                        labelText: 'Heure',
                         border: OutlineInputBorder(),
                       ),
                       child: InkWell(

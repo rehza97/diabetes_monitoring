@@ -22,11 +22,6 @@ export function TwoFactorForm({ onVerify, onCancel, loading = false }: TwoFactor
     e.preventDefault();
     setError("");
 
-    if (!code || code.length !== 6) {
-      setError("Le code de vérification doit contenir 6 chiffres");
-      return;
-    }
-
     try {
       await onVerify(code);
       setCode("");
@@ -79,7 +74,7 @@ export function TwoFactorForm({ onVerify, onCancel, loading = false }: TwoFactor
             Annuler
           </Button>
         )}
-        <Button type="submit" disabled={loading || code.length !== 6} className="flex-1">
+        <Button type="submit" disabled={loading} className="flex-1">
           {loading ? (
             <>
               <LoadingSpinner size="sm" className="mr-2" />

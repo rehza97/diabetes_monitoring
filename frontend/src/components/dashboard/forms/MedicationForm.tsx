@@ -143,7 +143,7 @@ export function MedicationForm({ medication, isOpen, onClose, onSubmit }: Medica
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="medicationName">
-              Nom du médicament <span className="text-destructive">*</span>
+              Nom du médicament
             </Label>
             <Input
               id="medicationName"
@@ -159,7 +159,7 @@ export function MedicationForm({ medication, isOpen, onClose, onSubmit }: Medica
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="dosage">
-                Dosage <span className="text-destructive">*</span>
+                Dosage
               </Label>
               <Input
                 id="dosage"
@@ -174,7 +174,7 @@ export function MedicationForm({ medication, isOpen, onClose, onSubmit }: Medica
 
             <div className="space-y-2">
               <Label htmlFor="frequency">
-                Fréquence <span className="text-destructive">*</span>
+                Fréquence
               </Label>
               <select
                 id="frequency"
@@ -196,7 +196,7 @@ export function MedicationForm({ medication, isOpen, onClose, onSubmit }: Medica
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="startDate">
-                Date de début <span className="text-destructive">*</span>
+                Date de début
               </Label>
               <Popover>
                 <PopoverTrigger asChild>

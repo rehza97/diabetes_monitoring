@@ -213,7 +213,6 @@ export function SupportPage() {
                     placeholder="Sujet de votre demande"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -224,7 +223,6 @@ export function SupportPage() {
                     rows={4}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    required
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>

@@ -164,14 +164,21 @@ class _NurseQuickRecordPageState extends State<NurseQuickRecordPage> {
     List<String> patientIds = [];
     if (_multiPatientMode) {
       if (_selectedPatientIds.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez sélectionner au moins un patient')),
-        );
-        return;
+        if (_patients.isNotEmpty) {
+          patientIds = [_patients.first.id];
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Aucun patient disponible')),
+          );
+          return;
+        }
+      } else {
+        patientIds = _selectedPatientIds.toList();
       }
-      patientIds = _selectedPatientIds.toList();
     } else {
-      final patientId = _selectedPatientId ?? widget.patientId;
+      final patientId = _selectedPatientId ??
+          widget.patientId ??
+          (_patients.isNotEmpty ? _patients.first.id : null);
       if (patientId == null || patientId.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Veuillez sélectionner un patient')),
@@ -181,7 +188,8 @@ class _NurseQuickRecordPageState extends State<NurseQuickRecordPage> {
       patientIds = [patientId];
     }
 
-    final value = double.tryParse(_valueController.text.trim());
+    final rawValue = _valueController.text.trim();
+    final value = rawValue.isEmpty ? 0.0 : double.tryParse(rawValue);
     if (value == null || value < 0 || value > 600) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Valeur entre 0 et 600')),
@@ -189,13 +197,10 @@ class _NurseQuickRecordPageState extends State<NurseQuickRecordPage> {
       return;
     }
 
-    final timeStr = _timeController.text.trim();
-    if (!isValidTimeHHmm(timeStr)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Heure invalide (HH:mm)')),
-      );
-      return;
-    }
+    final rawTime = _timeController.text.trim();
+    final timeStr = isValidTimeHHmm(rawTime)
+        ? rawTime
+        : _formatTime(DateTime.now());
 
     setState(() => _submitting = true);
     try {
@@ -374,7 +379,7 @@ class _NurseQuickRecordPageState extends State<NurseQuickRecordPage> {
                     if (!_multiPatientMode)
                       InputDecorator(
                         decoration: const InputDecoration(
-                          labelText: 'Patient *',
+                          labelText: 'Patient',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.person_outline),
                         ),
@@ -466,12 +471,14 @@ class _NurseQuickRecordPageState extends State<NurseQuickRecordPage> {
                     controller: _valueController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
-                      labelText: 'Valeur *',
+                      labelText: 'Valeur',
                       hintText: '0–600',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.analytics_outlined),
                     ),
                     validator: (v) {
+                      final t = (v ?? '').trim();
+                      if (t.isEmpty) return null;
                       final n = double.tryParse(v ?? '');
                       if (n == null) return 'Valeur requise.';
                       if (n < 0 || n > 600) return 'Entre 0 et 600.';
@@ -481,7 +488,7 @@ class _NurseQuickRecordPageState extends State<NurseQuickRecordPage> {
                   const SizedBox(height: 16),
                   InputDecorator(
                     decoration: const InputDecoration(
-                      labelText: 'Unité *',
+                      labelText: 'Unité',
                       border: OutlineInputBorder(),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -499,7 +506,7 @@ class _NurseQuickRecordPageState extends State<NurseQuickRecordPage> {
                   const SizedBox(height: 16),
                   InputDecorator(
                     decoration: const InputDecoration(
-                      labelText: 'Type *',
+                      labelText: 'Type',
                       border: OutlineInputBorder(),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -521,7 +528,7 @@ class _NurseQuickRecordPageState extends State<NurseQuickRecordPage> {
                     onTap: _pickDate,
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Date *',
+                        labelText: 'Date',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.calendar_today),
                       ),
@@ -532,13 +539,18 @@ class _NurseQuickRecordPageState extends State<NurseQuickRecordPage> {
                   TextFormField(
                     controller: _timeController,
                     decoration: const InputDecoration(
-                      labelText: 'Heure *',
+                      labelText: 'Heure',
                       hintText: 'HH:mm',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.access_time),
                     ),
-                    validator: (v) =>
-                        isValidTimeHHmm(v) ? null : 'Format HH:mm requis.',
+                    validator: (v) {
+                      final t = (v ?? '').trim();
+                      if (t.isEmpty) return null;
+                      return isValidTimeHHmm(v)
+                          ? null
+                          : 'Format HH:mm requis.';
+                    },
                   ),
                   const SizedBox(height: 16),
                   TextFormField(

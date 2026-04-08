@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -76,7 +76,7 @@ export function ReadingForm({ reading, isOpen, onClose, onSubmit, patients }: Re
     watch,
     setValue,
   } = useForm<ReadingFormData>({
-    resolver: zodResolver(createReadingSchema),
+    resolver: zodResolver(createReadingSchema) as Resolver<ReadingFormData>,
     defaultValues: reading
       ? {
           patient_id: reading.patient_id,
@@ -157,7 +157,7 @@ export function ReadingForm({ reading, isOpen, onClose, onSubmit, patients }: Re
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="patient_id">
-              Patient <span className="text-destructive">*</span>
+              Patient
             </Label>
             <Select
               value={watch("patient_id") || ""}
@@ -190,7 +190,7 @@ export function ReadingForm({ reading, isOpen, onClose, onSubmit, patients }: Re
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="value">
-                Valeur (mg/dL) <span className="text-destructive">*</span>
+                Valeur (mg/dL)
               </Label>
               <Input
                 id="value"
@@ -218,7 +218,7 @@ export function ReadingForm({ reading, isOpen, onClose, onSubmit, patients }: Re
 
             <div className="space-y-2">
               <Label htmlFor="unit">
-                Unité <span className="text-destructive">*</span>
+                Unité
               </Label>
               <Select
                 value={watch("unit") || "mg/dL"}
@@ -240,7 +240,7 @@ export function ReadingForm({ reading, isOpen, onClose, onSubmit, patients }: Re
 
           <div className="space-y-2">
             <Label htmlFor="reading_type">
-              Type de mesure <span className="text-destructive">*</span>
+              Type de mesure
             </Label>
             <Select
               value={watch("reading_type") || ""}
@@ -265,7 +265,7 @@ export function ReadingForm({ reading, isOpen, onClose, onSubmit, patients }: Re
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="date">
-                Date <span className="text-destructive">*</span>
+                Date
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -305,7 +305,7 @@ export function ReadingForm({ reading, isOpen, onClose, onSubmit, patients }: Re
 
             <div className="space-y-2">
               <Label htmlFor="time">
-                Heure <span className="text-destructive">*</span>
+                Heure
               </Label>
               <Input
                 id="time"

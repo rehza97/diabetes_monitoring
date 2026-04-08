@@ -106,16 +106,14 @@ class _QuickNoteFormState extends State<QuickNoteForm> {
           child: TextFormField(
             controller: _contentController,
             decoration: const InputDecoration(
-              labelText: 'Contenu *',
+              labelText: 'Contenu',
               border: OutlineInputBorder(),
               hintText: 'Saisissez votre note...',
             ),
             maxLines: 5,
             autofocus: true,
             validator: (v) {
-              if (v == null || v.trim().isEmpty) {
-                return 'Le contenu est requis';
-              }
+              if (v == null || v.trim().isEmpty) return null;
               return null;
             },
           ),

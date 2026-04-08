@@ -123,7 +123,7 @@ export function MedicalNoteForm({ note, isOpen, onClose, onSubmit }: MedicalNote
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="noteType">
-              Type de note <span className="text-destructive">*</span>
+              Type de note
             </Label>
             <Select
               value={watch("noteType") || "observation"}
@@ -147,7 +147,7 @@ export function MedicalNoteForm({ note, isOpen, onClose, onSubmit }: MedicalNote
 
           <div className="space-y-2">
             <Label htmlFor="content">
-              Contenu <span className="text-destructive">*</span>
+              Contenu
             </Label>
             <Textarea
               id="content"

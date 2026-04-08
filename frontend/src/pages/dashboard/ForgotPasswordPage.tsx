@@ -23,20 +23,37 @@ import { useNotification } from "@/context/NotificationContext";
 import { auth } from "@/lib/firebase";
 
 const emailSchema = z.object({
-  email: z.string().email("Email invalide"),
+  email: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (value) => !value || z.string().email().safeParse(value).success,
+      "Email invalide",
+    ),
 });
 
 const resetPasswordSchema = z
   .object({
     password: z
       .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-    confirmPassword: z.string(),
+      .optional()
+      .or(z.literal(""))
+      .refine(
+        (value) => !value || value.length >= 8,
+        "Le mot de passe doit contenir au moins 8 caractères",
+      ),
+    confirmPassword: z.string().optional().or(z.literal("")),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Les mots de passe ne correspondent pas",
-    path: ["confirmPassword"],
-  });
+  .refine(
+    (data) =>
+      (!data.password && !data.confirmPassword) ||
+      data.password === data.confirmPassword,
+    {
+      message: "Les mots de passe ne correspondent pas",
+      path: ["confirmPassword"],
+    },
+  );
 
 export function ForgotPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -62,7 +79,7 @@ export function ForgotPasswordPage() {
       setIsLoading(true);
 
       // Send password reset email via Firebase Auth
-      await sendPasswordResetEmail(auth, validatedData.email, {
+      await sendPasswordResetEmail(auth, validatedData.email || "", {
         url: `${window.location.origin}/forgot-password`,
         handleCodeInApp: false,
       });
@@ -107,7 +124,7 @@ export function ForgotPasswordPage() {
         throw new Error("Token de réinitialisation manquant");
       }
 
-      await confirmPasswordReset(auth, token, validatedData.password);
+      await confirmPasswordReset(auth, token, validatedData.password || "");
 
       addNotification({
         type: "success",

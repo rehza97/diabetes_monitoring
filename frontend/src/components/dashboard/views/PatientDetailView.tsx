@@ -269,8 +269,8 @@ export function PatientDetailView() {
   const { user: currentUser } = useAuth();
 
   const handleMedicalNoteSubmit = async (data: {
-    noteType: string;
-    content: string;
+    noteType?: string;
+    content?: string;
     isImportant?: boolean;
     tags?: string[];
   }) => {
@@ -280,7 +280,7 @@ export function PatientDetailView() {
       if (editingNote) {
         await updateMedicalNote(patient.id, editingNote.id, {
           ...data,
-          noteType: data.noteType as MedicalNoteType,
+          noteType: (data.noteType || "observation") as MedicalNoteType,
         });
         addNotification({
           type: "success",
@@ -294,7 +294,11 @@ export function PatientDetailView() {
             : undefined;
         await createMedicalNote(
           patient.id,
-          { ...data, noteType: data.noteType as MedicalNoteType },
+          {
+            ...data,
+            noteType: (data.noteType || "observation") as MedicalNoteType,
+            content: data.content || "",
+          },
           currentUser.id,
           doctorName,
         );
@@ -342,10 +346,10 @@ export function PatientDetailView() {
   };
 
   const handleMedicationSubmit = async (data: {
-    medicationName: string;
-    dosage: string;
-    frequency: string;
-    startDate: string;
+    medicationName?: string;
+    dosage?: string;
+    frequency?: string;
+    startDate?: string;
     endDate?: string;
     notes?: string;
   }) => {
@@ -353,16 +357,18 @@ export function PatientDetailView() {
 
     try {
       const { Timestamp } = await import("firebase/firestore");
-      const startDateTimestamp = Timestamp.fromDate(new Date(data.startDate));
+      const startDateTimestamp = Timestamp.fromDate(
+        new Date(data.startDate || new Date().toISOString()),
+      );
       const endDateTimestamp = data.endDate
         ? Timestamp.fromDate(new Date(data.endDate))
         : undefined;
 
       if (editingMedication) {
         await updateMedication(patient.id, editingMedication.id, {
-          medicationName: data.medicationName,
-          dosage: data.dosage,
-          frequency: data.frequency,
+          medicationName: data.medicationName || "",
+          dosage: data.dosage || "",
+          frequency: data.frequency || "",
           startDate: startDateTimestamp,
           endDate: endDateTimestamp,
           notes: data.notes || undefined,
@@ -380,9 +386,9 @@ export function PatientDetailView() {
         await createMedication(
           patient.id,
           {
-            medicationName: data.medicationName,
-            dosage: data.dosage,
-            frequency: data.frequency,
+            medicationName: data.medicationName || "",
+            dosage: data.dosage || "",
+            frequency: data.frequency || "",
             startDate: startDateTimestamp,
             endDate: endDateTimestamp,
             notes: data.notes || undefined,

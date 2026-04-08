@@ -140,7 +140,7 @@ export function GeneralSettingsForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="hospital_name">Nom de l'hôpital/clinique</Label>
-        <Input id="hospital_name" {...register("hospital_name", { required: true })} />
+        <Input id="hospital_name" {...register("hospital_name")} />
       </div>
 
       <div className="space-y-2">
@@ -157,11 +157,11 @@ export function GeneralSettingsForm() {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="contact_email">Email de contact</Label>
-          <Input id="contact_email" type="email" {...register("contact_email", { required: true })} />
+          <Input id="contact_email" type="email" {...register("contact_email")} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="contact_phone">Téléphone de contact</Label>
-          <Input id="contact_phone" {...register("contact_phone", { required: true })} />
+          <Input id="contact_phone" {...register("contact_phone")} />
         </div>
       </div>
 

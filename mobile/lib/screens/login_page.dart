@@ -150,7 +150,7 @@ class _LoginPageState extends State<LoginPage> {
                         prefixIcon: Icon(Icons.email_outlined),
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Email requis.';
+                        if (v == null || v.trim().isEmpty) return null;
                         if (!isValidEmail(v)) return 'Email invalide.';
                         return null;
                       },
@@ -177,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Mot de passe requis.';
+                        if (v == null || v.isEmpty) return null;
                         if (v.length < 6) return 'Le mot de passe doit contenir au moins 6 caractères.';
                         return null;
                       },

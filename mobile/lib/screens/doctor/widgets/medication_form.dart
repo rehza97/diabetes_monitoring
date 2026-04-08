@@ -179,13 +179,11 @@ class _MedicationFormState extends State<MedicationForm> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Nom du médicament *',
+                  labelText: 'Nom du médicament',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Le nom est requis';
-                  }
+                  if (v == null || v.trim().isEmpty) return null;
                   return null;
                 },
               ),
@@ -193,14 +191,12 @@ class _MedicationFormState extends State<MedicationForm> {
               TextFormField(
                 controller: _dosageController,
                 decoration: const InputDecoration(
-                  labelText: 'Dosage *',
+                  labelText: 'Dosage',
                   hintText: 'Ex: 500mg',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Le dosage est requis';
-                  }
+                  if (v == null || v.trim().isEmpty) return null;
                   return null;
                 },
               ),
@@ -208,14 +204,12 @@ class _MedicationFormState extends State<MedicationForm> {
               TextFormField(
                 controller: _frequencyController,
                 decoration: const InputDecoration(
-                  labelText: 'Fréquence *',
+                  labelText: 'Fréquence',
                   hintText: 'Ex: Quotidien, Deux fois par jour',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'La fréquence est requise';
-                  }
+                  if (v == null || v.trim().isEmpty) return null;
                   return null;
                 },
               ),
@@ -225,7 +219,7 @@ class _MedicationFormState extends State<MedicationForm> {
                   Expanded(
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Date de début *',
+                        labelText: 'Date de début',
                         border: OutlineInputBorder(),
                       ),
                       child: InkWell(

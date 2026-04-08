@@ -145,24 +145,30 @@ export function ScheduledReadingsPage() {
   ]);
 
   const handleFormSubmit = async (data: {
-    patientId: string;
-    readingType: string;
-    scheduledDate: string;
-    scheduledTime: string;
+    patientId?: string;
+    readingType?: string;
+    scheduledDate?: string;
+    scheduledTime?: string;
     notes?: string;
   }) => {
     try {
       const { Timestamp } = await import("firebase/firestore");
-      const scheduledDate = Timestamp.fromDate(new Date(data.scheduledDate));
+      const scheduledDate = Timestamp.fromDate(
+        new Date(data.scheduledDate || new Date().toISOString()),
+      );
+      const patientId = data.patientId || selectedPatientId || "";
+      const readingType = data.readingType || "random";
+      const scheduledTime =
+        data.scheduledTime || new Date().toTimeString().slice(0, 5);
 
       if (editingScheduled) {
         await updateScheduledReading(
           editingScheduled.patientId,
           editingScheduled.scheduled.id,
           {
-            readingType: data.readingType as any,
+            readingType: readingType as any,
             scheduledDate,
-            scheduledTime: data.scheduledTime,
+            scheduledTime,
             notes: data.notes || undefined,
           },
         );
@@ -172,10 +178,10 @@ export function ScheduledReadingsPage() {
           message: "Le planning a été modifié avec succès.",
         });
       } else {
-        await createScheduledReading(data.patientId, {
-          readingType: data.readingType as any,
+        await createScheduledReading(patientId, {
+          readingType: readingType as any,
           scheduledDate,
-          scheduledTime: data.scheduledTime,
+          scheduledTime,
           notes: data.notes || undefined,
         });
         addNotification({

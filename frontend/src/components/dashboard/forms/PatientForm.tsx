@@ -322,7 +322,7 @@ export function PatientForm({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="first_name">
-                  Prénom <span className="text-destructive">*</span>
+                  Prénom
                 </Label>
                 <Input id="first_name" {...register("first_name")} />
                 {errors.first_name && (
@@ -333,7 +333,7 @@ export function PatientForm({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="last_name">
-                  Nom <span className="text-destructive">*</span>
+                  Nom
                 </Label>
                 <Input id="last_name" {...register("last_name")} />
                 {errors.last_name && (
@@ -367,7 +367,7 @@ export function PatientForm({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gender">
-                  Sexe <span className="text-destructive">*</span>
+                  Sexe
                 </Label>
                 <Select
                   value={watch("gender") || ""}
@@ -414,7 +414,7 @@ export function PatientForm({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="diabetes_type">
-                  Type de diabète <span className="text-destructive">*</span>
+                  Type de diabète
                 </Label>
                 <Select
                   value={watch("diabetes_type") || ""}
@@ -443,7 +443,6 @@ export function PatientForm({
               <div className="space-y-2">
                 <Label htmlFor="diagnosis_year">
                   Année de diagnostic{" "}
-                  <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="diagnosis_year"
@@ -533,36 +532,16 @@ export function PatientForm({
         return (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Assignez un médecin ou une infirmière responsable. Au moins l'un
-              des deux doit être sélectionné.
+              Assignez un médecin ou une infirmière responsable.
             </p>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="doctor_id">
-                  Médecin responsable{" "}
-                  {watch("nurse_id") && watch("nurse_id") !== "none" ? (
-                    ""
-                  ) : (
-                    <span className="text-destructive">*</span>
-                  )}
-                </Label>
+                <Label htmlFor="doctor_id">Médecin responsable</Label>
                 <Select
                   value={watch("doctor_id") || "none"}
                   onValueChange={(value) => {
                     const newValue = value === "none" ? "" : value;
                     setValue("doctor_id", newValue, { shouldValidate: true });
-                    // If both are "none", keep at least one
-                    if (
-                      value === "none" &&
-                      (!watch("nurse_id") || watch("nurse_id") === "none")
-                    ) {
-                      // Keep doctor as default admin if available
-                      if (defaultAdminId) {
-                        setValue("doctor_id", defaultAdminId, {
-                          shouldValidate: true,
-                        });
-                      }
-                    }
                   }}
                 >
                   <SelectTrigger id="doctor_id">
@@ -593,31 +572,12 @@ export function PatientForm({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nurse_id">
-                  Infirmière responsable{" "}
-                  {watch("doctor_id") && watch("doctor_id") !== "none" ? (
-                    ""
-                  ) : (
-                    <span className="text-destructive">*</span>
-                  )}
-                </Label>
+                <Label htmlFor="nurse_id">Infirmière responsable</Label>
                 <Select
                   value={watch("nurse_id") || "none"}
                   onValueChange={(value) => {
                     const newValue = value === "none" ? "" : value;
                     setValue("nurse_id", newValue, { shouldValidate: true });
-                    // If both are "none", keep at least one
-                    if (
-                      value === "none" &&
-                      (!watch("doctor_id") || watch("doctor_id") === "none")
-                    ) {
-                      // Keep doctor as default admin if available
-                      if (defaultAdminId) {
-                        setValue("doctor_id", defaultAdminId, {
-                          shouldValidate: true,
-                        });
-                      }
-                    }
                   }}
                 >
                   <SelectTrigger id="nurse_id">
@@ -637,13 +597,6 @@ export function PatientForm({
                 </Select>
               </div>
             </div>
-            {(!watch("doctor_id") || watch("doctor_id") === "none") &&
-              (!watch("nurse_id") || watch("nurse_id") === "none") && (
-                <p className="text-sm text-destructive">
-                  Veuillez sélectionner au moins un médecin ou une infirmière
-                  responsable.
-                </p>
-              )}
           </div>
         );
 

@@ -101,6 +101,8 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
   });
 
   const role = watch("role");
+  const watchedFirstName = watch("first_name") || "";
+  const watchedLastName = watch("last_name") || "";
 
   useEffect(() => {
     if (isOpen) {
@@ -209,8 +211,8 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
             <Avatar className="h-20 w-20">
               <AvatarImage src={avatarPreview || undefined} />
               <AvatarFallback>
-                {watch("first_name") && watch("last_name")
-                  ? getInitials(watch("first_name"), watch("last_name"))
+                {watchedFirstName && watchedLastName
+                  ? getInitials(watchedFirstName, watchedLastName)
                   : "U"}
               </AvatarFallback>
             </Avatar>
@@ -250,7 +252,7 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="first_name">
-                Prénom <span className="text-destructive">*</span>
+                Prénom
               </Label>
               <Input
                 id="first_name"
@@ -266,7 +268,7 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="last_name">
-                Nom <span className="text-destructive">*</span>
+                Nom
               </Label>
               <Input
                 id="last_name"
@@ -284,7 +286,7 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="email">
-                Email <span className="text-destructive">*</span>
+                Email
               </Label>
               <Input
                 id="email"
@@ -312,7 +314,7 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="role">
-              Rôle <span className="text-destructive">*</span>
+              Rôle
             </Label>
             <Select
               value={watch("role") || ""}
@@ -353,7 +355,7 @@ export function UserForm({ user, isOpen, onClose, onSubmit }: UserFormProps) {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="password">
-                  Mot de passe <span className="text-destructive">*</span>
+                  Mot de passe
                 </Label>
                 <Input
                   id="password"

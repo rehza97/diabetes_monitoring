@@ -155,23 +155,19 @@ export function EmailSettingsForm() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="smtp_host">
-                    Serveur SMTP <span className="text-destructive">*</span>
-                  </Label>
+                  <Label htmlFor="smtp_host">Serveur SMTP</Label>
                   <Input
                     id="smtp_host"
                     placeholder="smtp.example.com"
-                    {...register("smtp_host", { required: true })}
+                    {...register("smtp_host")}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="smtp_port">
-                    Port <span className="text-destructive">*</span>
-                  </Label>
+                  <Label htmlFor="smtp_port">Port</Label>
                   <Input
                     id="smtp_port"
                     type="number"
-                    {...register("smtp_port", { valueAsNumber: true, required: true })}
+                    {...register("smtp_port", { valueAsNumber: true })}
                   />
                 </div>
               </div>
@@ -206,14 +202,12 @@ export function EmailSettingsForm() {
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="from_email">
-                    Email expéditeur <span className="text-destructive">*</span>
-                  </Label>
+                  <Label htmlFor="from_email">Email expéditeur</Label>
                   <Input
                     id="from_email"
                     type="email"
                     placeholder="noreply@example.com"
-                    {...register("from_email", { required: true })}
+                    {...register("from_email")}
                   />
                 </div>
                 <div className="space-y-2">

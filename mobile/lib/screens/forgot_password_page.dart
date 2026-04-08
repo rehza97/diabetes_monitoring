@@ -172,7 +172,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               prefixIcon: Icon(Icons.email_outlined),
             ),
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Email requis.';
+              if (v == null || v.trim().isEmpty) return null;
               if (!isValidEmail(v)) return 'Email invalide.';
               return null;
             },

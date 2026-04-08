@@ -90,7 +90,7 @@ export function LoginPage() {
         return;
       }
 
-      await login(validatedData.email, validatedData.password);
+      await login(validatedData.email || "", validatedData.password || "");
 
       // Gérer "Se souvenir de moi"
       if (remember) {
@@ -167,7 +167,6 @@ export function LoginPage() {
                   if (errors.email)
                     setErrors((prev) => ({ ...prev, email: undefined }));
                 }}
-                required
                 disabled={isLoading}
                 className={cn(errors.email && "border-destructive")}
                 aria-invalid={errors.email ? "true" : "false"}
@@ -197,7 +196,6 @@ export function LoginPage() {
                     if (errors.password)
                       setErrors((prev) => ({ ...prev, password: undefined }));
                   }}
-                  required
                   disabled={isLoading}
                   className={cn(
                     "pr-10",
@@ -301,7 +299,6 @@ export function LoginPage() {
                         }));
                       }
                     }}
-                    required
                     disabled={isLoading}
                     className={cn(
                       "text-center text-2xl tracking-widest",
